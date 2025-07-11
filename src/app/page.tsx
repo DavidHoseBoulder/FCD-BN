@@ -25,13 +25,11 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
     error = e.message || 'An unexpected error occurred.';
      if (e.message.includes('Could not load data')) {
       error = "Could not load data from the public Google Sheet. Please ensure it's shared with 'Anyone with the link' and the link is correct.";
-    } else if (e.message.includes('SA_KEY_NOT_SET')) {
-        console.warn("Service account not configured. 'Add Company' will not work.");
     }
   }
 
   const renderContent = () => {
-    if (error && !error.includes('SA_KEY_NOT_SET')) {
+    if (error) {
        return (
           <Card>
             <CardHeader>

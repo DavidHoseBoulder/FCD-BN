@@ -74,7 +74,9 @@ export default function DataCleaningView({ companyData }: { companyData: Company
               title: 'Configuration Error',
               description: 'Cannot write to sheet. Please configure your Google Service Account credentials.',
             });
-            break;
+            setResults([...newResults]);
+            setProgress(100); // Show completion even though we stopped early
+            return; // Stop the loop
           }
         }
         processedCount++;
@@ -136,47 +138,45 @@ export default function DataCleaningView({ companyData }: { companyData: Company
         </CardContent>
       </Card>
 
-      {isProcessing && (
+      {(isProcessing || results.length > 0) && (
          <Card>
             <CardHeader>
-                <CardTitle>Processing...</CardTitle>
+                <CardTitle>{isProcessing ? 'Processing...' : 'Results'}</CardTitle>
+                 {results.length > 0 && !isProcessing && <CardDescription>Updates applied to your Google Sheet.</CardDescription>}
             </CardHeader>
             <CardContent>
-                 <Progress value={progress} className="w-full" />
-                 <p className="text-center text-sm text-muted-foreground mt-2">
-                    {Math.round(progress)}% complete
-                 </p>
-            </CardContent>
-        </Card>
-      )}
-
-      {results.length > 0 && (
-         <Card>
-            <CardHeader>
-                <CardTitle>Results</CardTitle>
-                <CardDescription>Updates applied to your Google Sheet.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Company</TableHead>
-                            <TableHead>New Value</TableHead>
-                             <TableHead>Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {results.map((result, index) => (
-                            <TableRow key={index}>
-                                <TableCell className="font-medium">{result.companyName}</TableCell>
-                                <TableCell>{result.updatedValue}</TableCell>
-                                <TableCell className={result.status === 'error' ? 'text-destructive' : 'text-green-500'}>
-                                    {result.status === 'success' ? 'Success' : `Error: ${result.error}`}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                 {isProcessing && (
+                    <>
+                        <Progress value={progress} className="w-full" />
+                        <p className="text-center text-sm text-muted-foreground mt-2">
+                            {Math.round(progress)}% complete
+                        </p>
+                    </>
+                 )}
+                 {results.length > 0 && (
+                    <div className="mt-4">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Company</TableHead>
+                                    <TableHead>New Value</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {results.map((result, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell className="font-medium">{result.companyName}</TableCell>
+                                        <TableCell>{result.updatedValue}</TableCell>
+                                        <TableCell className={result.status === 'error' ? 'text-destructive' : 'text-green-500'}>
+                                            {result.status === 'success' ? 'Success' : `Error: ${result.error}`}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                 )}
             </CardContent>
         </Card>
       )}
