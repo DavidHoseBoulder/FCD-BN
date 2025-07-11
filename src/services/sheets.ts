@@ -1,10 +1,9 @@
 'use server';
 
 import type { Company } from '@/lib/data';
-import { companies as fallbackData } from '@/lib/data';
 import { google } from 'googleapis';
 
-const SHEET_ID = process.env.SHEET_ID;
+const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
 const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
@@ -12,8 +11,8 @@ const SHEET_NAME = 'Companies';
 const RANGE = `${SHEET_NAME}!A:G`;
 
 async function getSheetsClient() {
-  if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY || !SHEET_ID) {
-    throw new Error('SA_KEY_NOT_SET: Google service account credentials or Sheet ID are not set in environment variables.');
+  if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
+    throw new Error('SA_KEY_NOT_SET: Google service account credentials are not set in environment variables.');
   }
 
   const auth = new google.auth.GoogleAuth({
@@ -30,43 +29,33 @@ async function getSheetsClient() {
 
 
 export async function getCompaniesFromSheet(): Promise<Company[]> {
-  try {
-    const sheets = await getSheetsClient();
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: RANGE,
-    });
+    // Public read access via CSV export
+    const publicCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
 
-    const rows = response.data.values;
-    if (!rows || rows.length < 2) {
-      return [];
+    try {
+        const response = await fetch(publicCsvUrl);
+        if (!response.ok) {
+             throw new Error(`Failed to fetch sheet data: ${response.statusText}`);
+        }
+        const csvText = await response.text();
+        const rows = csvText.split('\n').slice(1).map(row => 
+            row.split(',').map(cell => JSON.parse(cell))
+        );
+
+        return rows.map((row, index) => ({
+            id: index + 1, // simplified ID generation
+            name: row[1] || '',
+            industry: row[2] || '',
+            city: row[3] || '',
+            yearFounded: parseInt(row[4], 10) || 0,
+            employees: parseInt(row[5], 10) || 0,
+            funding: parseInt(row[6], 10) || 0,
+        })).filter(c => c.name);
+
+    } catch (error) {
+       console.error('Error fetching public sheet data:', error);
+       throw new Error("Could not load data from the public Google Sheet. Please ensure it's shared with 'Anyone with the link'.");
     }
-    
-    const headers = rows[0];
-    const headerMap: { [key: string]: number } = {};
-    headers.forEach((header, i) => {
-        headerMap[header.trim()] = i;
-    });
-
-    const companies: Company[] = rows.slice(1).map((row, index) => {
-        const id = parseInt(row[headerMap['id']], 10) || index + 1;
-        if (!row[headerMap['name']]) return null;
-        return {
-            id: id,
-            name: row[headerMap['name']] || '',
-            industry: row[headerMap['industry']] || '',
-            city: row[headerMap['city']] || '',
-            yearFounded: parseInt(row[headerMap['yearFounded']], 10) || 0,
-            employees: parseInt(row[headerMap['employees']], 10) || 0,
-            funding: parseInt(row[headerMap['funding']], 10) || 0,
-        };
-    }).filter((c): c is Company => c !== null);
-
-    return companies;
-  } catch (error) {
-     console.error('Error fetching data from Google Sheets:', error);
-     throw error;
-  }
 }
 
 export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promise<Company> {

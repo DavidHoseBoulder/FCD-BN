@@ -21,15 +21,8 @@ export default async function Home() {
   } catch (e: any) {
     console.error(e);
     error = e.message || 'An unexpected error occurred.';
-    if (e.message.includes('SA_KEY_NOT_SET')) {
-      error =
-        'The Google service account credentials are not set. Please add them to your .env file.';
-    } else if (e.message.includes('invalid_grant')) {
-      error =
-        'Authentication failed. Please check your Google service account credentials in the .env file.';
-    } else if (e.message.includes('403')) {
-      error =
-        "Permission denied. Make sure you've shared your Google Sheet with the service account's email address and given it 'Editor' access.";
+     if (e.message.includes('Could not load data')) {
+      error = "Could not load data from the public Google Sheet. Please ensure it's shared with 'Anyone with the link' and the link is correct.";
     }
   }
 
@@ -40,9 +33,9 @@ export default async function Home() {
         {error ? (
           <Card>
             <CardHeader>
-              <CardTitle>Configuration Error</CardTitle>
+              <CardTitle>Data Fetching Error</CardTitle>
               <CardDescription>
-                Please resolve the following issue to connect to your Google Sheet.
+                Could not load data from the Google Sheet.
               </CardDescription>
             </CardHeader>
             <CardContent>
