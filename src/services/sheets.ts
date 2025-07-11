@@ -8,8 +8,13 @@ const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
 const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
 const SHEET_NAME = 'Companies';
-// Update range to match the new number of columns
-const RANGE = `${SHEET_NAME}!A:L`;
+
+const HEADERS = [
+  "Company Name", "Ecosystem Category", "Category", 
+  "Management Team (CEO/Key Execs)", "Headquarters", "Funding/Investors", 
+  "Key Customers / Segment", "Core Offering / Competitive Strengths", 
+  "Areas Addressed", "Est. Annual Revenue", "# Employees", "Notes & Source (for Rev & Emp)"
+];
 
 async function getSheetsClient() {
   if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
@@ -29,15 +34,12 @@ async function getSheetsClient() {
 }
 
 function parseRowToCompany(row: string[], index: number): Company | null {
-    // The first column is used as an implicit ID, but it's not in the data model.
-    // The actual company data starts from the second column in the sheet.
-    // We'll use the row number (plus a starting number) for a unique key.
     if (!row[0]) {
       return null;
     }
 
     return {
-        id: index + 1, // Use row index for a stable key
+        id: index + 2, // Sheet rows are 1-based, and we skip the header, so data starts at row 2
         name: row[0] || '',
         ecosystemCategory: row[1] || '',
         category: row[2] || '',
@@ -54,7 +56,6 @@ function parseRowToCompany(row: string[], index: number): Company | null {
 
 
 export async function getCompaniesFromSheet(): Promise<Company[]> {
-    // Public read access via CSV export
     const publicCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
 
     try {
@@ -66,9 +67,8 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
         const rows = csvText
           .trim()
           .split('\n')
-          .slice(1) // Skip header row
+          .slice(1) 
           .map(row => {
-            // This regex handles quoted strings that may contain commas
             return (row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []).map(cell => 
               cell.startsWith('"') && cell.endsWith('"') ? cell.substring(1, cell.length - 1) : cell
             );
@@ -89,11 +89,11 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
 
      const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: `${SHEET_NAME}!A2:A`, // Check the first column for content to find the last row
+        range: `${SHEET_NAME}!A2:A`,
     });
 
     const numRows = response.data.values ? response.data.values.length : 0;
-    const newId = numRows + 1; // Simple incrementing ID
+    const newId = numRows + 2; 
 
     const newCompany: Company = { ...companyData, id: newId };
     
@@ -109,12 +109,12 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
         newCompany.areasAddressed,
         newCompany.revenue,
         newCompany.employees,
-        '', // Notes & Source
+        '',
     ]];
 
     await sheets.spreadsheets.values.append({
         spreadsheetId: SHEET_ID,
-        range: `${SHEET_NAME}!A${numRows + 2}`, // Append to the next available row
+        range: `${SHEET_NAME}!A${numRows + 2}`,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
@@ -123,4 +123,25 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
     });
 
     return newCompany;
+}
+
+export async function updateSheetCell({ companyId, columnName, newValue }: { companyId: number, columnName: string, newValue: string }): Promise<void> {
+    const sheets = await getSheetsClient();
+    const columnIndex = HEADERS.indexOf(columnName);
+
+    if (columnIndex === -1) {
+        throw new Error(`Column "${columnName}" not found.`);
+    }
+
+    const columnLetter = String.fromCharCode('A'.charCodeAt(0) + columnIndex);
+    const range = `${SHEET_NAME}!${columnLetter}${companyId}`;
+
+    await sheets.spreadsheets.values.update({
+        spreadsheetId: SHEET_ID,
+        range,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+            values: [[newValue]],
+        },
+    });
 }

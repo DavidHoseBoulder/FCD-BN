@@ -11,10 +11,12 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
+import DataCleaningView from '@/components/data-cleaning-view';
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
   let companyData: Company[] = [];
   let error: string | null = null;
+  const currentView = searchParams.view || 'dashboard';
 
   try {
     companyData = await getCompaniesFromSheet();
@@ -24,17 +26,13 @@ export default async function Home() {
      if (e.message.includes('Could not load data')) {
       error = "Could not load data from the public Google Sheet. Please ensure it's shared with 'Anyone with the link' and the link is correct.";
     } else if (e.message.includes('SA_KEY_NOT_SET')) {
-        // This is a special case for the "Add Company" feature. We don't want to block the page from loading.
-        // We will show an error toast in the component itself when the user tries to add a company.
         console.warn("Service account not configured. 'Add Company' will not work.");
     }
   }
 
-  return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <Header />
-      <main className="flex-1 p-4 sm:p-6 md:p-8">
-        {error && !error.includes('SA_KEY_NOT_SET') ? (
+  const renderContent = () => {
+    if (error && !error.includes('SA_KEY_NOT_SET')) {
+       return (
           <Card>
             <CardHeader>
               <CardTitle>Data Fetching Error</CardTitle>
@@ -50,9 +48,21 @@ export default async function Home() {
               </Alert>
             </CardContent>
           </Card>
-        ) : (
-          <DashboardClient initialData={companyData} />
-        )}
+        )
+    }
+
+    if (currentView === 'datacleaning') {
+      return <DataCleaningView companyData={companyData} />;
+    }
+    return <DashboardClient initialData={companyData} />;
+  }
+
+
+  return (
+    <div className="flex flex-col min-h-screen bg-background">
+      <Header />
+      <main className="flex-1 p-4 sm:p-6 md:p-8">
+        {renderContent()}
       </main>
     </div>
   );
