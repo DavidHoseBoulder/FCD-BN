@@ -1,9 +1,10 @@
-import { companies, type Company } from '@/lib/data';
+import { Company } from '@/lib/data';
 import DashboardClient from '@/components/dashboard-client';
 import Header from '@/components/header';
+import { getCompaniesFromSheet } from '@/services/sheets';
 
-export default function Home() {
-  const companyData: Company[] = companies;
+export default async function Home() {
+  const companyData: Company[] = await getCompaniesFromSheet();
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
