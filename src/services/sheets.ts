@@ -1,4 +1,5 @@
 import type { Company } from '@/lib/data';
+import { companies as fallbackData } from '@/lib/data';
 
 const SHEET_ID = '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 const GID = '438990019';
@@ -37,13 +38,18 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch sheet data: ${response.statusText}`);
+            console.error(`Failed to fetch sheet data: ${response.statusText}. Falling back to local data.`);
+            return fallbackData;
         }
 
         const csvText = await response.text();
-        return parseCSV(csvText);
+        const parsedData = parseCSV(csvText);
+        if (parsedData.length === 0) {
+            return fallbackData;
+        }
+        return parsedData;
     } catch (error) {
-        console.error("Error fetching or parsing sheet data:", error);
-        return [];
+        console.error("Error fetching or parsing sheet data. Falling back to local data:", error);
+        return fallbackData;
     }
 }
