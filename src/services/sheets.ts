@@ -55,14 +55,14 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
           });
         
         return rows.map((row) => ({
-            id: parseInt(row[0], 10) || 0,
+            id: parseInt(row[0], 10),
             name: row[1] || '',
             industry: row[2] || '',
             city: row[3] || '',
             yearFounded: parseInt(row[4], 10) || 0,
             employees: parseInt(row[5], 10) || 0,
             funding: parseInt(row[6], 10) || 0,
-        })).filter(c => c.name); // Filter out any empty rows
+        })).filter(c => c.id && c.name); // Filter out any rows without an ID or name
 
     } catch (error) {
        console.error('Error fetching public sheet data:', error);
