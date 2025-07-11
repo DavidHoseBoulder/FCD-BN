@@ -8,7 +8,8 @@ const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
 const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
 const SHEET_NAME = 'Companies';
-const RANGE = `${SHEET_NAME}!A:G`;
+// Update range to match the new number of columns
+const RANGE = `${SHEET_NAME}!A:L`;
 
 async function getSheetsClient() {
   if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
@@ -27,6 +28,30 @@ async function getSheetsClient() {
   return google.sheets({ version: 'v4', auth: authClient });
 }
 
+function parseRowToCompany(row: string[], index: number): Company | null {
+    // The first column is used as an implicit ID, but it's not in the data model.
+    // The actual company data starts from the second column in the sheet.
+    // We'll use the row number (plus a starting number) for a unique key.
+    if (!row[0]) {
+      return null;
+    }
+
+    return {
+        id: index + 1, // Use row index for a stable key
+        name: row[0] || '',
+        ecosystemCategory: row[1] || '',
+        category: row[2] || '',
+        ceo: row[3] || '',
+        headquarters: row[4] || '',
+        funding: row[5] || '',
+        customers: row[6] || '',
+        offering: row[7] || '',
+        areasAddressed: row[8] || '',
+        revenue: row[9] || '',
+        employees: row[10] || '',
+    };
+}
+
 
 export async function getCompaniesFromSheet(): Promise<Company[]> {
     // Public read access via CSV export
@@ -38,31 +63,20 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
              throw new Error(`Failed to fetch sheet data: ${response.statusText}`);
         }
         const csvText = await response.text();
-        // The CSV from Google Sheets wraps each cell in double quotes. 
-        // We need to remove the quotes from each cell and from the entire row.
         const rows = csvText
+          .trim()
           .split('\n')
           .slice(1) // Skip header row
           .map(row => {
-            // Split by comma, but handle commas inside quotes later if needed
-            return row.split(',').map(cell => {
-              // Remove leading/trailing quotes and trim whitespace
-              if (cell.startsWith('"') && cell.endsWith('"')) {
-                return cell.substring(1, cell.length - 1);
-              }
-              return cell;
-            });
+            // This regex handles quoted strings that may contain commas
+            return (row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []).map(cell => 
+              cell.startsWith('"') && cell.endsWith('"') ? cell.substring(1, cell.length - 1) : cell
+            );
           });
         
-        return rows.map((row) => ({
-            id: parseInt(row[0], 10),
-            name: row[1] || '',
-            industry: row[2] || '',
-            city: row[3] || '',
-            yearFounded: parseInt(row[4], 10) || 0,
-            employees: parseInt(row[5], 10) || 0,
-            funding: parseInt(row[6], 10) || 0,
-        })).filter(c => c.id && c.name); // Filter out any rows without an ID or name
+        return rows
+          .map((row, index) => parseRowToCompany(row, index))
+          .filter((c): c is Company => c !== null && !!c.name);
 
     } catch (error) {
        console.error('Error fetching public sheet data:', error);
@@ -73,30 +87,36 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
 export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promise<Company> {
     const sheets = await getSheetsClient();
 
-    // First, get all existing IDs to determine the next one
-    const idResponse = await sheets.spreadsheets.values.get({
+     const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: `${SHEET_NAME}!A2:A`,
+        range: `${SHEET_NAME}!A2:A`, // Check the first column for content to find the last row
     });
-    const ids = idResponse.data.values?.map(row => parseInt(row[0], 10)).filter(id => !isNaN(id)) || [];
-    const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
-    
+
+    const numRows = response.data.values ? response.data.values.length : 0;
+    const newId = numRows + 1; // Simple incrementing ID
+
     const newCompany: Company = { ...companyData, id: newId };
     
     const values = [[
-        newCompany.id,
         newCompany.name,
-        newCompany.industry,
-        newCompany.city,
-        newCompany.yearFounded,
-        newCompany.employees,
+        newCompany.ecosystemCategory,
+        newCompany.category,
+        newCompany.ceo,
+        newCompany.headquarters,
         newCompany.funding,
+        newCompany.customers,
+        newCompany.offering,
+        newCompany.areasAddressed,
+        newCompany.revenue,
+        newCompany.employees,
+        '', // Notes & Source
     ]];
 
     await sheets.spreadsheets.values.append({
         spreadsheetId: SHEET_ID,
-        range: RANGE,
+        range: `${SHEET_NAME}!A${numRows + 2}`, // Append to the next available row
         valueInputOption: 'USER_ENTERED',
+        insertDataOption: 'INSERT_ROWS',
         requestBody: {
             values,
         },

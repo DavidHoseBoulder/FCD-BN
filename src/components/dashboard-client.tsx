@@ -48,12 +48,16 @@ export default function DashboardClient({ initialData }: { initialData: Company[
         title: 'Success',
         description: 'Company added to your sheet.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding company:', error);
+      let description = 'Failed to add company. Please try again.';
+      if (error.message.includes('SA_KEY_NOT_SET')) {
+        description = 'Cannot add company. Service account credentials are not configured.';
+      }
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to add company. Please try again.',
+        description,
       });
     }
   };

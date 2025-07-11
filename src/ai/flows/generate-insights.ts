@@ -29,11 +29,11 @@ const prompt = ai.definePrompt({
   name: 'generateInsightsPrompt',
   input: {schema: GenerateInsightsInputSchema},
   output: {schema: GenerateInsightsOutputSchema},
-  prompt: `You are an expert business analyst. Generate insights from the following company data. The data is in JSON format.
+  prompt: `You are an expert business analyst for the financial technology sector. Generate insights from the following company data. The data is in JSON format.
 
 Data: {{{companyData}}}
 
-Provide a concise summary of the key trends, patterns, and actionable insights derived from the data. Focus on aspects like industry distribution, average funding, and employee growth.
+Provide a concise summary of the key trends, patterns, and actionable insights derived from the data. Focus on aspects like ecosystem category distribution, common headquarters locations, funding trends (e.g., bootstrapped vs. venture-backed), and employee count ranges.
 `,
 });
 

@@ -15,14 +15,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { Company } from '@/lib/data';
 import { useTransition } from 'react';
+import { Textarea } from './ui/textarea';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Company name must be at least 2 characters.' }),
-  industry: z.string().min(2, { message: 'Industry must be at least 2 characters.' }),
-  city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
-  yearFounded: z.coerce.number().int().min(1800).max(new Date().getFullYear()),
-  employees: z.coerce.number().int().min(1),
-  funding: z.coerce.number().min(0),
+  ecosystemCategory: z.string().min(2, { message: 'Ecosystem category is required.' }),
+  category: z.string().optional(),
+  ceo: z.string().optional(),
+  headquarters: z.string().min(2, { message: 'Headquarters is required.' }),
+  funding: z.string().optional(),
+  customers: z.string().optional(),
+  offering: z.string().optional(),
+  areasAddressed: z.string().optional(),
+  revenue: z.string().optional(),
+  employees: z.string().optional(),
 });
 
 type AddCompanyFormProps = {
@@ -36,17 +42,33 @@ export function AddCompanyForm({ onSubmit }: AddCompanyFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      industry: '',
-      city: '',
-      yearFounded: new Date().getFullYear(),
-      employees: 10,
-      funding: 1,
+      ecosystemCategory: '',
+      category: '',
+      ceo: '',
+      headquarters: '',
+      funding: '',
+      customers: '',
+      offering: '',
+      areasAddressed: '',
+      revenue: '',
+      employees: '',
     },
   });
 
   function handleFormSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
-      await onSubmit(values);
+        const fullCompanyData = {
+          ...values,
+          category: values.category || '',
+          ceo: values.ceo || '',
+          funding: values.funding || '',
+          customers: values.customers || '',
+          offering: values.offering || '',
+          areasAddressed: values.areasAddressed || '',
+          revenue: values.revenue || '',
+          employees: values.employees || '',
+        };
+      await onSubmit(fullCompanyData);
       form.reset();
     });
   }
@@ -55,84 +77,99 @@ export function AddCompanyForm({ onSubmit }: AddCompanyFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Innovate Inc." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="ecosystemCategory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ecosystem Category</FormLabel>
+                <FormControl>
+                  <Input placeholder="Core Connectivity & Infrastructure" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="headquarters"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Headquarters</FormLabel>
+                <FormControl>
+                  <Input placeholder="San Francisco" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="employees"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel># Employees</FormLabel>
+                <FormControl>
+                  <Input placeholder="50-100" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="funding"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Funding/Investors</FormLabel>
+                <FormControl>
+                  <Input placeholder="Bootstrapped" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="revenue"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Est. Annual Revenue</FormLabel>
+                <FormControl>
+                  <Input placeholder="$10M-$19M" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="md:col-span-2">
             <FormField
               control={form.control}
-              name="name"
+              name="offering"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Company Name</FormLabel>
+                  <FormLabel>Core Offering</FormLabel>
                   <FormControl>
-                    <Input placeholder="Innovate Inc." {...field} />
+                    <Textarea placeholder="Describe the company's core offering..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="industry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Industry</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Tech" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input placeholder="San Francisco" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="yearFounded"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Year Founded</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="employees"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Employees</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="funding"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Funding (in millions)</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          </div>
         </div>
         <Button type="submit" disabled={isPending}>
           {isPending ? 'Adding...' : 'Add Company'}

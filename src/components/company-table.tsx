@@ -49,8 +49,8 @@ const SortableHeader = ({
 };
 
 export function CompanyTable({ data }: { data: Company[] }) {
-  const [sortKey, setSortKey] = useState<SortKey>('funding');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -66,6 +66,10 @@ export function CompanyTable({ data }: { data: Company[] }) {
     const sorted = [...data].sort((a, b) => {
       const aValue = a[sortKey];
       const bValue = b[sortKey];
+      
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return aValue.localeCompare(bValue);
+      }
 
       if (aValue < bValue) return -1;
       if (aValue > bValue) return 1;
@@ -75,9 +79,6 @@ export function CompanyTable({ data }: { data: Company[] }) {
     return sortDirection === 'asc' ? sorted : sorted.reverse();
   }, [data, sortKey, sortDirection]);
 
-  const formatFunding = (amount: number) => `$${amount}M`;
-  const formatEmployees = (count: number) => count.toLocaleString();
-
   return (
     <Table>
       <TableHeader>
@@ -85,20 +86,20 @@ export function CompanyTable({ data }: { data: Company[] }) {
           <SortableHeader sortKey="name" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('name')}>
             Company Name
           </SortableHeader>
-          <SortableHeader sortKey="industry" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('industry')}>
-            Industry
+          <SortableHeader sortKey="ecosystemCategory" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('ecosystemCategory')}>
+            Ecosystem
           </SortableHeader>
-          <SortableHeader sortKey="city" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('city')}>
-            City
+          <SortableHeader sortKey="headquarters" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('headquarters')}>
+            Headquarters
           </SortableHeader>
-          <SortableHeader sortKey="yearFounded" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('yearFounded')}>
-            Founded
-          </SortableHeader>
-          <SortableHeader sortKey="employees" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('employees')}>
+           <SortableHeader sortKey="employees" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('employees')}>
             Employees
           </SortableHeader>
           <SortableHeader sortKey="funding" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('funding')}>
             Funding
+          </SortableHeader>
+          <SortableHeader sortKey="revenue" currentSortKey={sortKey} sortDirection={sortDirection} onClick={() => handleSort('revenue')}>
+            Est. Revenue
           </SortableHeader>
         </TableRow>
       </TableHeader>
@@ -106,11 +107,11 @@ export function CompanyTable({ data }: { data: Company[] }) {
         {sortedData.map((company) => (
           <TableRow key={company.id}>
             <TableCell className="font-medium">{company.name}</TableCell>
-            <TableCell>{company.industry}</TableCell>
-            <TableCell>{company.city}</TableCell>
-            <TableCell>{company.yearFounded}</TableCell>
-            <TableCell className="text-right">{formatEmployees(company.employees)}</TableCell>
-            <TableCell className="text-right font-semibold text-primary">{formatFunding(company.funding)}</TableCell>
+            <TableCell>{company.ecosystemCategory}</TableCell>
+            <TableCell>{company.headquarters}</TableCell>
+            <TableCell>{company.employees}</TableCell>
+            <TableCell>{company.funding}</TableCell>
+            <TableCell className="font-semibold text-primary">{company.revenue}</TableCell>
           </TableRow>
         ))}
       </TableBody>
