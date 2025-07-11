@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'SheetSurfer',
+  title: 'BusinessNext / FCD Dashboard',
   description: 'Analyze and get insights from your Google Sheets data.',
 };
 

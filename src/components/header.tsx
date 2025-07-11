@@ -15,7 +15,7 @@ export default function Header() {
       <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
         <div className="flex gap-2 items-center">
           <Sheet className="h-6 w-6 text-primary" />
-          <h1 className="text-xl font-bold tracking-tight text-primary">SheetSurfer</h1>
+          <h1 className="text-xl font-bold tracking-tight text-primary">BusinessNext / FCD Dashboard</h1>
         </div>
         <div className="flex items-center gap-4">
           <DropdownMenu>
