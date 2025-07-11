@@ -2,15 +2,60 @@ import { Company } from '@/lib/data';
 import DashboardClient from '@/components/dashboard-client';
 import Header from '@/components/header';
 import { getCompaniesFromSheet } from '@/services/sheets';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Terminal } from 'lucide-react';
 
 export default async function Home() {
-  const companyData: Company[] = await getCompaniesFromSheet();
+  let companyData: Company[] = [];
+  let error: string | null = null;
+
+  try {
+    companyData = await getCompaniesFromSheet();
+  } catch (e: any) {
+    console.error(e);
+    error = e.message || 'An unexpected error occurred.';
+    if (e.message.includes('SA_KEY_NOT_SET')) {
+      error =
+        'The Google service account credentials are not set. Please add them to your .env file.';
+    } else if (e.message.includes('invalid_grant')) {
+      error =
+        'Authentication failed. Please check your Google service account credentials in the .env file.';
+    } else if (e.message.includes('403')) {
+      error =
+        "Permission denied. Make sure you've shared your Google Sheet with the service account's email address and given it 'Editor' access.";
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
       <main className="flex-1 p-4 sm:p-6 md:p-8">
-        <DashboardClient data={companyData} />
+        {error ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuration Error</CardTitle>
+              <CardDescription>
+                Please resolve the following issue to connect to your Google Sheet.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert variant="destructive">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        ) : (
+          <DashboardClient initialData={companyData} />
+        )}
       </main>
     </div>
   );

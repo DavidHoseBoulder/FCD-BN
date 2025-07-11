@@ -1,55 +1,105 @@
+'use server';
+
 import type { Company } from '@/lib/data';
 import { companies as fallbackData } from '@/lib/data';
+import { google } from 'googleapis';
 
-const SHEET_ID = '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
-const GID = '438990019';
-const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+const SHEET_ID = process.env.SHEET_ID;
+const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
-function parseCSV(csvText: string): Company[] {
-    const lines = csvText.trim().split(/\r\n|\n/);
-    if (lines.length < 2) return [];
+const SHEET_NAME = 'Companies';
+const RANGE = `${SHEET_NAME}!A:G`;
 
-    const headers = lines[0].split(',').map(h => h.trim());
-    const companies: Company[] = [];
+async function getSheetsClient() {
+  if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY || !SHEET_ID) {
+    throw new Error('SA_KEY_NOT_SET: Google service account credentials or Sheet ID are not set in environment variables.');
+  }
 
-    for (let i = 1; i < lines.length; i++) {
-        const values: (string | number)[] = lines[i].split(',');
-        const company = {} as any;
-        for(let j = 0; j < headers.length; j++) {
-            const header = headers[j];
-            let value: string | number = values[j];
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: SERVICE_ACCOUNT_EMAIL,
+      private_key: PRIVATE_KEY,
+    },
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
 
-            if (header === 'id' || header === 'yearFounded' || header === 'employees' || header === 'funding') {
-                value = Number(value);
-            }
-            company[header] = value;
-        }
-        companies.push(company as Company);
-    }
-    return companies;
+  const authClient = await auth.getClient();
+  return google.sheets({ version: 'v4', auth: authClient });
 }
 
+
 export async function getCompaniesFromSheet(): Promise<Company[]> {
-    try {
-        const response = await fetch(CSV_URL, {
-            next: {
-                revalidate: 3600 // Revalidate every hour
-            }
-        });
+  try {
+    const sheets = await getSheetsClient();
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: RANGE,
+    });
 
-        if (!response.ok) {
-            console.error(`Failed to fetch sheet data: ${response.statusText}. Falling back to local data.`);
-            return fallbackData;
-        }
-
-        const csvText = await response.text();
-        const parsedData = parseCSV(csvText);
-        if (parsedData.length === 0) {
-            return fallbackData;
-        }
-        return parsedData;
-    } catch (error) {
-        console.error("Error fetching or parsing sheet data. Falling back to local data:", error);
-        return fallbackData;
+    const rows = response.data.values;
+    if (!rows || rows.length < 2) {
+      return [];
     }
+    
+    const headers = rows[0];
+    const headerMap: { [key: string]: number } = {};
+    headers.forEach((header, i) => {
+        headerMap[header.trim()] = i;
+    });
+
+    const companies: Company[] = rows.slice(1).map((row, index) => {
+        const id = parseInt(row[headerMap['id']], 10) || index + 1;
+        if (!row[headerMap['name']]) return null;
+        return {
+            id: id,
+            name: row[headerMap['name']] || '',
+            industry: row[headerMap['industry']] || '',
+            city: row[headerMap['city']] || '',
+            yearFounded: parseInt(row[headerMap['yearFounded']], 10) || 0,
+            employees: parseInt(row[headerMap['employees']], 10) || 0,
+            funding: parseInt(row[headerMap['funding']], 10) || 0,
+        };
+    }).filter((c): c is Company => c !== null);
+
+    return companies;
+  } catch (error) {
+     console.error('Error fetching data from Google Sheets:', error);
+     throw error;
+  }
+}
+
+export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promise<Company> {
+    const sheets = await getSheetsClient();
+
+    // First, get all existing IDs to determine the next one
+    const idResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: `${SHEET_NAME}!A2:A`,
+    });
+    const ids = idResponse.data.values?.map(row => parseInt(row[0], 10)).filter(id => !isNaN(id)) || [];
+    const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
+    
+    const newCompany: Company = { ...companyData, id: newId };
+    
+    const values = [[
+        newCompany.id,
+        newCompany.name,
+        newCompany.industry,
+        newCompany.city,
+        newCompany.yearFounded,
+        newCompany.employees,
+        newCompany.funding,
+    ]];
+
+    await sheets.spreadsheets.values.append({
+        spreadsheetId: SHEET_ID,
+        range: RANGE,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+            values,
+        },
+    });
+
+    return newCompany;
 }
