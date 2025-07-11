@@ -3,15 +3,14 @@
 import type { Company } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { cn } from '@/lib/utils';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import { Pie, PieChart, Sector } from 'recharts';
-import { useState, useCallback } from 'react';
+import { Pie, PieChart, Sector, Cell } from 'recharts';
+import { useState, useCallback, useMemo } from 'react';
 
 type DataSummaryProps = {
   data: Company[];
@@ -76,18 +75,19 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect }: Data
 
   const sortedEcosystems = Object.entries(ecosystemCounts).sort(([, a], [, b]) => b - a);
 
-  const chartData = sortedEcosystems.map(([name, value]) => ({
+  const chartData = useMemo(() => sortedEcosystems.map(([name, value]) => ({
     name,
     value,
-  }));
+  })), [sortedEcosystems]);
 
-  const chartConfig = chartData.reduce((acc, item, index) => {
+  const chartConfig = useMemo(() => chartData.reduce((acc, item, index) => {
     acc[item.name] = {
       label: item.name,
       color: `hsl(var(--chart-${(index % 5) + 1}))`,
     };
     return acc;
-  }, {} as ChartConfig);
+  }, {} as ChartConfig), [chartData]);
+  
 
   const revenueCounts = data.reduce((acc, company) => {
     const revenueStr = company.revenue || '';
@@ -148,8 +148,8 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect }: Data
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}
                     >
-                        {chartData.map((entry) => (
-                          <Sector key={entry.name} fill={chartConfig[entry.name]?.color} />
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${(index % 5) + 1}))`} />
                         ))}
                     </Pie>
                 </PieChart>
