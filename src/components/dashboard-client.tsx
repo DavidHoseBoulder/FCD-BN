@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { AddCompanyForm } from './add-company-form';
 import { addCompanyToSheet } from '@/services/sheets';
+import { DataSummary } from './data-summary';
 
 export default function DashboardClient({ initialData }: { initialData: Company[] }) {
   const [data, setData] = useState<Company[]>(initialData);
@@ -65,6 +66,7 @@ export default function DashboardClient({ initialData }: { initialData: Company[
 
   return (
     <div className="grid gap-6">
+      <DataSummary data={data} />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
