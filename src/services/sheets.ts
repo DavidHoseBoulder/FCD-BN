@@ -33,24 +33,36 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
     const publicCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
 
     try {
-        const response = await fetch(publicCsvUrl);
+        const response = await fetch(publicCsvUrl, { cache: 'no-store' });
         if (!response.ok) {
              throw new Error(`Failed to fetch sheet data: ${response.statusText}`);
         }
         const csvText = await response.text();
-        const rows = csvText.split('\n').slice(1).map(row => 
-            row.split(',').map(cell => JSON.parse(cell))
-        );
-
-        return rows.map((row, index) => ({
-            id: index + 1, // simplified ID generation
+        // The CSV from Google Sheets wraps each cell in double quotes. 
+        // We need to remove the quotes from each cell and from the entire row.
+        const rows = csvText
+          .split('\n')
+          .slice(1) // Skip header row
+          .map(row => {
+            // Split by comma, but handle commas inside quotes later if needed
+            return row.split(',').map(cell => {
+              // Remove leading/trailing quotes and trim whitespace
+              if (cell.startsWith('"') && cell.endsWith('"')) {
+                return cell.substring(1, cell.length - 1);
+              }
+              return cell;
+            });
+          });
+        
+        return rows.map((row) => ({
+            id: parseInt(row[0], 10) || 0,
             name: row[1] || '',
             industry: row[2] || '',
             city: row[3] || '',
             yearFounded: parseInt(row[4], 10) || 0,
             employees: parseInt(row[5], 10) || 0,
             funding: parseInt(row[6], 10) || 0,
-        })).filter(c => c.name);
+        })).filter(c => c.name); // Filter out any empty rows
 
     } catch (error) {
        console.error('Error fetching public sheet data:', error);
