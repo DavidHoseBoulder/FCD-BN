@@ -34,6 +34,8 @@ export function DataSummary({ data }: DataSummaryProps) {
     return acc;
   }, {} as Record<string, number>);
 
+  const sortedEcosystems = Object.entries(ecosystemCounts).sort(([, a], [, b]) => b - a);
+
   const revenueCounts = data.reduce((acc, company) => {
     const revenueStr = company.revenue || '';
     const bucket = revenueMapping[revenueStr] || 'Unknown';
@@ -57,7 +59,7 @@ export function DataSummary({ data }: DataSummaryProps) {
           <CardTitle>By Ecosystem</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-            {Object.entries(ecosystemCounts).map(([category, count]) => (
+            {sortedEcosystems.map(([category, count]) => (
                 <div key={category} className="flex items-center gap-2">
                     <Badge variant="secondary">{category}</Badge>
                     <span className="font-semibold">{count}</span>
