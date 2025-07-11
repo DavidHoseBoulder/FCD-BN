@@ -3,9 +3,12 @@
 import type { Company } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 type DataSummaryProps = {
   data: Company[];
+  selectedEcosystem: string | null;
+  onEcosystemSelect: (category: string) => void;
 };
 
 const revenueBuckets = {
@@ -25,7 +28,7 @@ const revenueMapping: { [key: string]: keyof typeof revenueBuckets } = {
     '>$50M': '> $50M',
 };
 
-export function DataSummary({ data }: DataSummaryProps) {
+export function DataSummary({ data, selectedEcosystem, onEcosystemSelect }: DataSummaryProps) {
   const totalCompanies = data.length;
 
   const ecosystemCounts = data.reduce((acc, company) => {
@@ -60,8 +63,13 @@ export function DataSummary({ data }: DataSummaryProps) {
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
             {sortedEcosystems.map(([category, count]) => (
-                <div key={category} className="flex items-center gap-2">
-                    <Badge variant="secondary">{category}</Badge>
+                <div key={category} className="flex items-center gap-2 cursor-pointer" onClick={() => onEcosystemSelect(category)}>
+                    <Badge variant={selectedEcosystem === category ? 'default' : 'secondary'} className={cn(
+                        'transition-all',
+                        selectedEcosystem === category && 'ring-2 ring-primary-foreground'
+                    )}>
+                      {category}
+                    </Badge>
                     <span className="font-semibold">{count}</span>
                 </div>
             ))}

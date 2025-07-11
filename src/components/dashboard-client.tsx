@@ -1,7 +1,7 @@
 'use client';
 
 import type { Company } from '@/lib/data';
-import { useState, useTransition, startTransition } from 'react';
+import { useState, useTransition, startTransition, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Lightbulb, PlusCircle } from 'lucide-react';
@@ -18,12 +18,24 @@ export default function DashboardClient({ initialData }: { initialData: Company[
   const [insights, setInsights] = useState<string | null>(null);
   const [isGeneratingInsights, startInsightsTransition] = useTransition();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedEcosystem, setSelectedEcosystem] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const handleEcosystemSelect = (category: string) => {
+    setSelectedEcosystem((prev) => (prev === category ? null : category));
+  };
+
+  const filteredData = useMemo(() => {
+    if (!selectedEcosystem) {
+      return data;
+    }
+    return data.filter((company) => company.ecosystemCategory === selectedEcosystem);
+  }, [data, selectedEcosystem]);
 
   const handleGenerateInsights = () => {
     startInsightsTransition(async () => {
       try {
-        const jsonString = JSON.stringify(data);
+        const jsonString = JSON.stringify(filteredData);
         const result = await generateInsights({ companyData: jsonString });
         setInsights(result.insights);
       } catch (error) {
@@ -66,13 +78,17 @@ export default function DashboardClient({ initialData }: { initialData: Company[
 
   return (
     <div className="grid gap-6">
-      <DataSummary data={data} />
+      <DataSummary 
+        data={data} 
+        onEcosystemSelect={handleEcosystemSelect}
+        selectedEcosystem={selectedEcosystem}
+      />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>AI Insights</CardTitle>
             <CardDescription>
-              Automatic summary of your company data.
+              Automatic summary of your company data. {selectedEcosystem && `(Filtered by ${selectedEcosystem})`}
             </CardDescription>
           </div>
           <Button onClick={handleGenerateInsights} disabled={isGeneratingInsights} className="bg-accent hover:bg-accent/90">
@@ -105,7 +121,11 @@ export default function DashboardClient({ initialData }: { initialData: Company[
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Company Data</CardTitle>
-            <CardDescription>A list of companies from your sheet.</CardDescription>
+            <CardDescription>
+              {selectedEcosystem 
+                ? `${filteredData.length} companies in ${selectedEcosystem}`
+                : `A list of all ${data.length} companies from your sheet.`}
+            </CardDescription>
           </div>
           <Button onClick={() => setShowAddForm(!showAddForm)} variant="outline">
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -118,7 +138,7 @@ export default function DashboardClient({ initialData }: { initialData: Company[
                 <AddCompanyForm onSubmit={handleAddCompany} />
             </div>
            )}
-          <CompanyTable data={data} />
+          <CompanyTable data={filteredData} />
         </CardContent>
       </Card>
     </div>
