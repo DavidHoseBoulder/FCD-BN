@@ -2,12 +2,11 @@
 
 import type { Company } from '@/lib/data';
 import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
 
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 const SHEET_NAME = 'Companies';
 
-// This HEADERS array must exactly match the column headers in your Google Sheet.
-// This is critical for the 'updateSheetCell' function to find the correct column.
 const HEADERS = [
   "Company Name", "Ecosystem Category", "Category", 
   "Management Team (CEO/Key Execs)", "Headquarters", "Funding/Investors", 
@@ -16,22 +15,22 @@ const HEADERS = [
   "Still Exists?"
 ];
 
+
 /**
  * Initializes and returns an authenticated Google Sheets API client.
  * It automatically uses the attached service account credentials when running in App Hosting.
  */
 async function getSheetsClient() {
-  // When running on App Hosting, Google's auth library automatically
-  // finds and uses the associated service account credentials.
-  const auth = new google.auth.GoogleAuth({
+  // Use a more explicit authentication method to try and resolve token issues.
+  const auth = new GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    // Explicitly setting the project ID can resolve authentication issues in some environments.
     projectId: process.env.GOOGLE_CLOUD_PROJECT,
   });
 
   const authClient = await auth.getClient();
   return google.sheets({ version: 'v4', auth: authClient });
 }
+
 
 function parseRowToCompany(row: string[], index: number): Company | null {
     if (!row[0]) {
