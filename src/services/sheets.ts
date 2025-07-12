@@ -1,3 +1,4 @@
+
 'use server';
 
 import type { Company } from '@/lib/data';
@@ -6,6 +7,7 @@ import { GoogleAuth } from 'google-auth-library';
 
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 const SHEET_NAME = 'Companies';
+const TARGET_SERVICE_ACCOUNT = 'sheets-writer@sheetsurfer-j1dsc.iam.gserviceaccount.com';
 
 // This header list MUST match the columns in your Google Sheet exactly.
 const HEADERS = [
@@ -19,12 +21,17 @@ const HEADERS = [
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * This function is designed to work within the Firebase App Hosting environment.
+ * This function is designed to work within the Firebase App Hosting environment
+ * by impersonating a target service account.
  */
 async function getSheetsClient() {
   const auth = new GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    projectId: process.env.GOOGLE_CLOUD_PROJECT,
+    // Impersonate the specific service account that has been granted Sheets access.
+    // The App Hosting compute SA must have the "Service Account Token Creator" role on this target SA.
+    clientOptions: {
+      subject: TARGET_SERVICE_AFFECT_ACCOUNT,
+    }
   });
 
   const authClient = await auth.getClient();
