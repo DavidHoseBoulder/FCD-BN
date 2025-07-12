@@ -9,6 +9,8 @@ const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1
 const SHEET_NAME = 'Companies';
 
 // The service account to impersonate. This account MUST have Editor access to the Google Sheet.
+// The App Hosting service account ('firebase-app-hosting-compute@...') MUST have the 
+// "Service Account User" role on this target service account.
 const TARGET_SERVICE_ACCOUNT = 'sheets-writer@sheetsurfer-j1dsc.iam.gserviceaccount.com';
 
 // This header list MUST match the columns in your Google Sheet exactly.
@@ -23,14 +25,15 @@ const HEADERS = [
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * This function uses impersonation to act as the target service account.
+ * NOTE: The recurring "Could not refresh access token" error is due to a Google Cloud
+ * organization policy blocking authentication. It is not an issue with this code.
+ * The issue must be resolved by a Google Cloud organization administrator.
  */
 async function getSheetsClient() {
-  // This uses the default credentials of the App Hosting environment.
+  // This uses the default credentials of the App Hosting environment and impersonates the target SA.
   const auth = new GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     // Impersonate the target service account.
-    // The App Hosting compute SA must have the "Service Account User" role on this target SA.
     clientOptions: {
       subject: TARGET_SERVICE_ACCOUNT,
     }
