@@ -17,6 +17,7 @@ const HEADERS = [
 /**
  * Initializes and returns an authenticated Google Sheets API client.
  * It automatically uses the attached service account credentials when running in App Hosting.
+ * The underlying service account must have the Google Sheets API enabled and the Editor role in the project.
  */
 async function getSheetsClient() {
   // When running on App Hosting, Google's auth library automatically
