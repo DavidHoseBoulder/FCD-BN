@@ -6,6 +6,7 @@ import { google } from 'googleapis';
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 const SHEET_NAME = 'Companies';
 
+// This HEADERS array must exactly match the column headers in your Google Sheet.
 const HEADERS = [
   "Company Name", "Ecosystem Category", "Category", 
   "Management Team (CEO/Key Execs)", "Headquarters", "Funding/Investors", 
@@ -17,7 +18,6 @@ const HEADERS = [
 /**
  * Initializes and returns an authenticated Google Sheets API client.
  * It automatically uses the attached service account credentials when running in App Hosting.
- * The underlying service account must have the Google Sheets API enabled and the Editor role in the project.
  */
 async function getSheetsClient() {
   // When running on App Hosting, Google's auth library automatically
