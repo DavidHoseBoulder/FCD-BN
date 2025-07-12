@@ -30,7 +30,7 @@ async function getSheetsClient() {
     // Impersonate the specific service account that has been granted Sheets access.
     // The App Hosting compute SA must have the "Service Account Token Creator" role on this target SA.
     clientOptions: {
-      subject: TARGET_SERVICE_AFFECT_ACCOUNT,
+      subject: TARGET_SERVICE_ACCOUNT,
     }
   });
 
