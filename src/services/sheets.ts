@@ -18,6 +18,7 @@ const HEADERS = [
 /**
  * Initializes and returns an authenticated Google Sheets API client.
  * It automatically uses the attached service account credentials when running in App Hosting.
+ * No separate key files are needed in this environment.
  */
 async function getSheetsClient() {
   // When running on App Hosting, Google's auth library automatically
