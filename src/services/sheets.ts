@@ -7,7 +7,6 @@ import { GoogleAuth } from 'google-auth-library';
 
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 const SHEET_NAME = 'Companies';
-const TARGET_SERVICE_ACCOUNT = 'sheets-writer@sheetsurfer-j1dsc.iam.gserviceaccount.com';
 
 // This header list MUST match the columns in your Google Sheet exactly.
 const HEADERS = [
@@ -21,17 +20,22 @@ const HEADERS = [
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * This function is designed to work within the Firebase App Hosting environment
- * by impersonating a target service account.
+ * This function uses a service account key for authentication.
  */
 async function getSheetsClient() {
-  const auth = new GoogleAuth({
+  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+  if (!serviceAccountEmail || !privateKey) {
+    throw new Error('SA_KEY_NOT_SET: The GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY environment variables must be set.');
+  }
+
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: serviceAccountEmail,
+      private_key: privateKey,
+    },
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    // Impersonate the specific service account that has been granted Sheets access.
-    // The App Hosting compute SA must have the "Service Account Token Creator" role on this target SA.
-    clientOptions: {
-      subject: TARGET_SERVICE_ACCOUNT,
-    }
   });
 
   const authClient = await auth.getClient();
