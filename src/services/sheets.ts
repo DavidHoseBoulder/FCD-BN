@@ -7,6 +7,7 @@ import { GoogleAuth } from 'google-auth-library';
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 const SHEET_NAME = 'Companies';
 
+// This header list MUST match the columns in your Google Sheet exactly.
 const HEADERS = [
   "Company Name", "Ecosystem Category", "Category", 
   "Management Team (CEO/Key Execs)", "Headquarters", "Funding/Investors", 
@@ -18,10 +19,9 @@ const HEADERS = [
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * It automatically uses the attached service account credentials when running in App Hosting.
+ * This function is designed to work within the Firebase App Hosting environment.
  */
 async function getSheetsClient() {
-  // Use a more explicit authentication method to try and resolve token issues.
   const auth = new GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     projectId: process.env.GOOGLE_CLOUD_PROJECT,
