@@ -10,7 +10,8 @@ const HEADERS = [
   "Company Name", "Ecosystem Category", "Category", 
   "Management Team (CEO/Key Execs)", "Headquarters", "Funding/Investors", 
   "Key Customers / Segment", "Core Offering / Competitive Strengths", 
-  "Areas Addressed", "Est. Annual Revenue", "# Employees", "Notes & Source (for Rev & Emp)"
+  "Areas Addressed", "Est. Annual Revenue", "# Employees", "Notes & Source (for Rev & Emp)",
+  "Still Exists?"
 ];
 
 async function getSheetsClient() {
