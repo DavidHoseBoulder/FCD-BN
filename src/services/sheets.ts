@@ -14,6 +14,10 @@ const HEADERS = [
   "Still Exists?"
 ];
 
+/**
+ * Initializes and returns an authenticated Google Sheets API client.
+ * It automatically uses the attached service account credentials when running in App Hosting.
+ */
 async function getSheetsClient() {
   // When running on App Hosting, Google's auth library automatically
   // finds and uses the associated service account credentials.
