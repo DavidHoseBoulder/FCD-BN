@@ -4,9 +4,6 @@ import type { Company } from '@/lib/data';
 import { google } from 'googleapis';
 
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
-const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
 const SHEET_NAME = 'Companies';
 
 const HEADERS = [
@@ -17,15 +14,10 @@ const HEADERS = [
 ];
 
 async function getSheetsClient() {
-  if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
-    throw new Error('SA_KEY_NOT_SET: Google service account credentials are not set in environment variables.');
-  }
-
+  // When running on App Hosting, Google's auth library automatically
+  // finds and uses the associated service account credentials.
+  // No need to manually handle keys.
   const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: SERVICE_ACCOUNT_EMAIL,
-      private_key: PRIVATE_KEY,
-    },
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
