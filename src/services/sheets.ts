@@ -5,11 +5,14 @@ import type { Company } from '@/lib/data';
 import { google } from 'googleapis';
 import { GoogleAuth } from 'google-auth-library';
 
+// The ID of your Google Sheet.
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
+// The name of the sheet (tab) within your Google Sheet.
 const SHEET_NAME = 'Companies';
 
 
 // This header list MUST match the columns in your Google Sheet exactly.
+// This is used to map column names to their index when updating a cell.
 const HEADERS = [
   "Company Name", "Ecosystem Category", "Category", 
   "Management Team (CEO/Key Execs)", "Headquarters", "Funding/Investors", 
@@ -21,15 +24,13 @@ const HEADERS = [
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * This function uses Application Default Credentials, which is the standard
+ * This function uses Application Default Credentials (ADC), which is the standard
  * authentication method for Google Cloud environments like App Hosting.
  * The service account running the app (e.g., firebase-app-hosting-compute@...)
  * must have the necessary IAM permissions (e.g., "Editor" role) and the
  * Google Sheets API must be enabled for the project.
  */
 async function getSheetsClient() {
-  // Use Application Default Credentials.
-  // This automatically finds the credentials from the environment.
   const auth = new GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
@@ -61,6 +62,10 @@ function parseRowToCompany(row: string[], index: number): Company | null {
 }
 
 
+/**
+ * Fetches company data from the public-facing CSV export of the Google Sheet.
+ * This method does not require authentication and is suitable for read-only public data.
+ */
 export async function getCompaniesFromSheet(): Promise<Company[]> {
     const publicCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
 
@@ -90,6 +95,10 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
     }
 }
 
+/**
+ * Appends a new company row to the Google Sheet.
+ * Requires authenticated access via the service account.
+ */
 export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promise<Company> {
     const sheets = await getSheetsClient();
 
@@ -132,6 +141,10 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
     return newCompany;
 }
 
+/**
+ * Updates a single cell in the Google Sheet.
+ * Requires authenticated access via the service account.
+ */
 export async function updateSheetCell({ companyId, columnName, newValue }: { companyId: number, columnName: string, newValue: string }): Promise<void> {
     const sheets = await getSheetsClient();
     const columnIndex = HEADERS.indexOf(columnName);
