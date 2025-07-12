@@ -8,6 +8,9 @@ import { GoogleAuth } from 'google-auth-library';
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 const SHEET_NAME = 'Companies';
 
+// The service account to impersonate. This account MUST have Editor access to the Google Sheet.
+const TARGET_SERVICE_ACCOUNT = 'sheets-writer@sheetsurfer-j1dsc.iam.gserviceaccount.com';
+
 // This header list MUST match the columns in your Google Sheet exactly.
 const HEADERS = [
   "Company Name", "Ecosystem Category", "Category", 
@@ -20,22 +23,17 @@ const HEADERS = [
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * This function uses a service account key for authentication.
+ * This function uses impersonation to act as the target service account.
  */
 async function getSheetsClient() {
-  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-  if (!serviceAccountEmail || !privateKey) {
-    throw new Error('SA_KEY_NOT_SET: The GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY environment variables must be set.');
-  }
-
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: serviceAccountEmail,
-      private_key: privateKey,
-    },
+  // This uses the default credentials of the App Hosting environment.
+  const auth = new GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    // Impersonate the target service account.
+    // The App Hosting compute SA must have the "Service Account User" role on this target SA.
+    clientOptions: {
+      subject: TARGET_SERVICE_ACCOUNT,
+    }
   });
 
   const authClient = await auth.getClient();
