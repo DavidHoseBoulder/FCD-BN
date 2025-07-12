@@ -7,6 +7,7 @@ const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1
 const SHEET_NAME = 'Companies';
 
 // This HEADERS array must exactly match the column headers in your Google Sheet.
+// This is critical for the 'updateSheetCell' function to find the correct column.
 const HEADERS = [
   "Company Name", "Ecosystem Category", "Category", 
   "Management Team (CEO/Key Execs)", "Headquarters", "Funding/Investors", 
@@ -18,7 +19,6 @@ const HEADERS = [
 /**
  * Initializes and returns an authenticated Google Sheets API client.
  * It automatically uses the attached service account credentials when running in App Hosting.
- * No separate key files are needed in this environment.
  */
 async function getSheetsClient() {
   // When running on App Hosting, Google's auth library automatically
@@ -93,7 +93,7 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
     });
 
     const numRows = response.data.values ? response.data.values.length : 0;
-    const newId = numRows + 2; 
+    const newId = numRows + 1; 
 
     const newCompany: Company = { ...companyData, id: newId };
     
@@ -115,7 +115,7 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
 
     await sheets.spreadsheets.values.append({
         spreadsheetId: SHEET_ID,
-        range: `${SHEET_NAME}!A${newId}`,
+        range: `${SHEET_NAME}!A1`,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
