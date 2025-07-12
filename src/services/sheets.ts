@@ -17,9 +17,10 @@ const HEADERS = [
 async function getSheetsClient() {
   // When running on App Hosting, Google's auth library automatically
   // finds and uses the associated service account credentials.
-  // No need to manually handle keys.
   const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    // Explicitly setting the project ID can resolve authentication issues in some environments.
+    projectId: process.env.GOOGLE_CLOUD_PROJECT,
   });
 
   const authClient = await auth.getClient();
@@ -82,7 +83,7 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
 
      const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: `${SHEET_NAME}!A2:A`,
+        range: `${SHEET_NAME}!A:A`,
     });
 
     const numRows = response.data.values ? response.data.values.length : 0;
@@ -102,12 +103,13 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
         newCompany.areasAddressed,
         newCompany.revenue,
         newCompany.employees,
-        '',
+        '', // Notes
+        '', // Still Exists?
     ]];
 
     await sheets.spreadsheets.values.append({
         spreadsheetId: SHEET_ID,
-        range: `${SHEET_NAME}!A${numRows + 2}`,
+        range: `${SHEET_NAME}!A${newId}`,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
