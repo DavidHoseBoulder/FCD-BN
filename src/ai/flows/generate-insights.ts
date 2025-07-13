@@ -22,6 +22,7 @@ const GenerateInsightsOutputSchema = z.object({
 export type GenerateInsightsOutput = z.infer<typeof GenerateInsightsOutputSchema>;
 
 export async function generateInsights(input: GenerateInsightsInput): Promise<GenerateInsightsOutput> {
+  console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON is available:', !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
   return generateInsightsFlow(input);
 }
 
