@@ -24,9 +24,6 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
   } catch (e: any) {
     console.error(e);
     error = e.message || 'An unexpected error occurred.';
-     if (e.message.includes('Could not load data')) {
-      error = "Could not load data from the public Google Sheet. Please ensure it's shared with 'Anyone with the link' and the link is correct.";
-    }
   }
 
   const renderContent = () => {
@@ -42,7 +39,7 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
             <CardContent>
               <Alert variant="destructive">
                 <Terminal className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>Error Details</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             </CardContent>
