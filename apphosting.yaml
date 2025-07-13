@@ -7,4 +7,6 @@ runConfig:
   maxInstances: 1
 env:
   - variable: GOOGLE_SERVICE_ACCOUNT_EMAIL
+    secret: GOOGLE_SERVICE_ACCOUNT_EMAIL
   - variable: GOOGLE_PRIVATE_KEY_BASE64
+    secret: GOOGLE_PRIVATE_KEY_BASE64
