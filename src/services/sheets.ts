@@ -15,9 +15,9 @@ const SHEET_NAME = process.env.SHEET_NAME || 'Company List';
  */
 async function getSheetsClient() {
   const sa_email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  // The private key is read directly from the environment variable.
-  // It should be formatted correctly in the .env file (multi-line, wrapped in quotes).
-  const sa_key = process.env.GOOGLE_PRIVATE_KEY;
+  // The private key must have newlines replaced with actual newlines.
+  // This handles both single-line format with escaped newlines and multi-line format.
+  const sa_key = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
   if (!sa_email || !sa_key) {
     throw new Error('SA_KEY_NOT_SET: Google Service Account credentials are not set in environment variables.');
