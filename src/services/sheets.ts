@@ -11,31 +11,33 @@ const SHEET_NAME = process.env.SHEET_NAME || 'Company List';
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * Uses service account credentials from environment variables.
+ * Uses a service account JSON string from environment variables.
  */
 async function getSheetsClient() {
-  const sa_email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  // The private key must have newlines replaced with actual newlines.
-  // This handles both single-line format with escaped newlines and multi-line format.
-  const sa_key_raw = process.env.GOOGLE_PRIVATE_KEY;
+  const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
-  if (!sa_email || !sa_key_raw) {
-    throw new Error('SA_KEY_NOT_SET: Google Service Account credentials are not set in environment variables.');
+  if (!credentialsJsonString) {
+    throw new Error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
   }
-  
-  const sa_key = sa_key_raw.replace(/\\n/g, '\n');
 
   try {
-    const auth = new google.auth.JWT({
-      email: sa_email,
-      key: sa_key,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
+    const credentials = JSON.parse(credentialsJsonString);
+
+    const auth = google.auth.fromJSON(credentials);
+    if (auth === null) {
+      // This case should not be hit if credentials are valid JSON, but it's good practice.
+      throw new Error('Google Auth client is null. Check credentials.');
+    }
+    // @ts-ignore - The type of auth is broad, but fromJSON provides a client with scopes.
+    auth.scopes = ['https://www.googleapis.com/auth/spreadsheets'];
 
     return google.sheets({ version: 'v4', auth });
   } catch (error: any) {
-    console.error('Failed to create Google Auth JWT client:', error);
-    throw new Error(`PRIVATE_KEY_PARSE_ERROR: Failed to parse Google private key. Please check the format. Original error: ${error.message}`);
+    console.error('Failed to initialize Google Sheets client:', error);
+    if (error instanceof SyntaxError) {
+      throw new Error(`INVALID_JSON: Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON. Please ensure it's a valid JSON string. Original error: ${error.message}`);
+    }
+    throw new Error(`Authentication failed: ${error.message}`);
   }
 }
 
