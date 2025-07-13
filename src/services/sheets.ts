@@ -17,7 +17,6 @@ const credentials = {
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * This function uses credentials embedded directly in the source code.
  */
 async function getSheetsClient() {
   const auth = new google.auth.JWT({
@@ -30,13 +29,13 @@ async function getSheetsClient() {
 }
 
 
-function parseRowToCompany(row: string[], index: number): Company | null {
+function parseRowToCompany(row: string[], rowNumber: number): Company | null {
     if (!row[0]) {
       return null;
     }
 
     return {
-        id: index + 2, // Sheet rows are 1-based, and we skip the header, so data starts at row 2
+        id: rowNumber,
         name: row[0] || '',
         ecosystemCategory: row[1] || '',
         category: row[2] || '',
@@ -70,17 +69,30 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
           .split('\n')
           .slice(1);
         
-        const nonEmptyRows = allRows.filter(row => row.trim() !== '' && row.trim() !== '"""""""""""');
+        const companies: Company[] = [];
 
-        const parsedRows = nonEmptyRows.map(row => {
-            return (row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []).map(cell => 
-              cell.startsWith('"') && cell.endsWith('"') ? cell.substring(1, cell.length - 1) : cell
-            );
+        allRows.forEach((row, index) => {
+          // The actual row number in the sheet is index + 2 (1-based index + 1 for header)
+          const rowNumber = index + 2; 
+          const trimmedRow = row.trim();
+
+          // Skip rows that are empty or just contain quotes
+          if (trimmedRow === '' || /^"+$/.test(trimmedRow)) {
+            return;
+          }
+
+          const parsedCsvRow = (row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []).map(cell => 
+            cell.startsWith('"') && cell.endsWith('"') ? cell.substring(1, cell.length - 1) : cell
+          );
+          
+          const company = parseRowToCompany(parsedCsvRow, rowNumber);
+
+          if (company && company.name) {
+            companies.push(company);
+          }
         });
         
-        return parsedRows
-          .map((row, index) => parseRowToCompany(row, index))
-          .filter((c): c is Company => c !== null && !!c.name);
+        return companies;
 
     } catch (error) {
        console.error('Error fetching public sheet data:', error);
