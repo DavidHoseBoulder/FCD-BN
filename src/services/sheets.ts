@@ -24,19 +24,29 @@ const HEADERS = [
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * This function uses Application Default Credentials (ADC), which is the standard
- * authentication method for Google Cloud environments like App Hosting.
- * The service account running the app (e.g., firebase-app-hosting-compute@...)
- * must have the necessary IAM permissions (e.g., "Editor" role) and the
- * Google Sheets API must be enabled for the project.
+ * This function uses a service account key provided via environment variables.
+ * This is the most reliable authentication method in environments with strict
+ * organization policies.
+ * 
+ * The following environment variables must be set as secrets in App Hosting:
+ * - GOOGLE_SERVICE_ACCOUNT_EMAIL: The client_email from the JSON key file.
+ * - GOOGLE_PRIVATE_KEY: The private_key from the JSON key file.
  */
 async function getSheetsClient() {
-  const auth = new GoogleAuth({
+  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+
+  if (!serviceAccountEmail || !privateKey) {
+    throw new Error('SA_KEY_NOT_SET: The GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY environment variables must be set.');
+  }
+
+  const auth = new google.auth.JWT({
+    email: serviceAccountEmail,
+    key: privateKey.replace(/\\n/g, '\n'),
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
-  const authClient = await auth.getClient();
-  return google.sheets({ version: 'v4', auth: authClient });
+  return google.sheets({ version: 'v4', auth });
 }
 
 
