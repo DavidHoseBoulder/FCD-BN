@@ -4,6 +4,7 @@
 import type { Company } from '@/lib/data';
 import { google } from 'googleapis';
 import { HEADERS } from '@/lib/sheets-constants';
+import serviceAccount from './service-account.json';
 
 // The ID of your Google Sheet.
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
@@ -13,29 +14,20 @@ const SHEET_NAME = 'Companies';
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
- * This function uses a service account key provided via environment variables.
- * This is the most reliable authentication method in environments with strict
- * organization policies.
- * 
- * The following environment variables must be set as secrets in App Hosting:
- * - GOOGLE_SERVICE_ACCOUNT_EMAIL: The client_email from the JSON key file.
- * - GOOGLE_PRIVATE_KEY: The private_key from the JSON key file.
+ * This function uses a service account key loaded from a local JSON file.
  */
 async function getSheetsClient() {
-  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+  try {
+    const auth = new google.auth.JWT({
+      email: serviceAccount.client_email,
+      key: serviceAccount.private_key,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
 
-  if (!serviceAccountEmail || !privateKey) {
-    throw new Error('SA_KEY_NOT_SET: The GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY environment variables must be set.');
+    return google.sheets({ version: 'v4', auth });
+  } catch (e: any) {
+    throw new Error(`SA_KEY_INVALID: Could not load service account credentials from JSON. ${e.message}`);
   }
-
-  const auth = new google.auth.JWT({
-    email: serviceAccountEmail,
-    key: privateKey.replace(/\\n/g, '\n'),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-
-  return google.sheets({ version: 'v4', auth });
 }
 
 
