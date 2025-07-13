@@ -17,11 +17,14 @@ const SHEET_NAME = 'Companies';
  */
 async function getSheetsClient() {
   const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const privateKeyBase64 = process.env.GOOGLE_PRIVATE_KEY_BASE64;
 
-  if (!serviceAccountEmail || !privateKey) {
-    throw new Error('SA_KEY_NOT_SET: The GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY environment variables must be set.');
+  if (!serviceAccountEmail || !privateKeyBase64) {
+    throw new Error('SA_KEY_NOT_SET: The GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY_BASE64 environment variables must be set.');
   }
+
+  // Decode the Base64 private key
+  const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf8');
 
   const auth = new google.auth.JWT({
     email: serviceAccountEmail,

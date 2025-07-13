@@ -4,19 +4,16 @@
 /node_modules
 /.pnp
 .pnp.js
-
-# testing
-/coverage
+.yarn/install-state.gz
+.yarn/cache
 
 # next.js
 /.next/
 /out/
 
-# production
-/build
-
 # misc
-.DS_Store
+/coverage
+/.DS_Store
 *.pem
 
 # debug
@@ -34,6 +31,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# Project-specific
-src/services/service-account.json
