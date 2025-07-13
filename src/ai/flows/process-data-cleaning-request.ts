@@ -46,7 +46,7 @@ Company Information:
 
 Based on the request and the company information, determine the new value for the column: "{{targetColumn}}".
 
-Return only the updated value for the specified column. If you cannot find the information, return an empty string.`,
+IMPORTANT: Your response MUST be a JSON object with a single key "updatedValue". If you cannot find the information or are unsure, return an empty string for the "updatedValue", like this: { "updatedValue": "" }. Do not provide explanations or refuse to answer.`,
   config: {
     safetySettings: [
       {

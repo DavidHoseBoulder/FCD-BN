@@ -63,9 +63,8 @@ export default function DataCleaningView({ companyData, headers }: { companyData
             status: 'success',
           });
         } catch (error: any) {
-          console.error(`Error processing ${company.name}:`, error);
           let errorMessage = 'An AI processing error occurred.';
-           if (error.message.includes('SA_KEY_NOT_SET')) {
+          if (error.message.includes('SA_KEY_NOT_SET')) {
             errorMessage = 'Service account not configured. Cannot write to sheet.';
           }
           newResults.push({
@@ -74,8 +73,8 @@ export default function DataCleaningView({ companyData, headers }: { companyData
             status: 'error',
             error: errorMessage,
           });
+          console.error(`Error processing '${company.name}':`, error);
 
-          // Stop processing if the service account is not set
           if (error.message.includes('SA_KEY_NOT_SET')) {
              toast({
               variant: 'destructive',
@@ -83,8 +82,8 @@ export default function DataCleaningView({ companyData, headers }: { companyData
               description: 'Cannot write to sheet. Please configure your Google Service Account credentials.',
             });
             setResults([...newResults]);
-            setProgress(100); // Show completion even though we stopped early
-            return; // Stop the loop
+            setProgress(100);
+            return;
           }
         }
         processedCount++;
