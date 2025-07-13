@@ -65,17 +65,20 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
              throw new Error(`Failed to fetch sheet data: ${response.statusText}`);
         }
         const csvText = await response.text();
-        const rows = csvText
+        const allRows = csvText
           .trim()
           .split('\n')
-          .slice(1) 
-          .map(row => {
+          .slice(1);
+        
+        const nonEmptyRows = allRows.filter(row => row.trim() !== '' && row.trim() !== '"""""""""""');
+
+        const parsedRows = nonEmptyRows.map(row => {
             return (row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []).map(cell => 
               cell.startsWith('"') && cell.endsWith('"') ? cell.substring(1, cell.length - 1) : cell
             );
-          });
+        });
         
-        return rows
+        return parsedRows
           .map((row, index) => parseRowToCompany(row, index))
           .filter((c): c is Company => c !== null && !!c.name);
 
