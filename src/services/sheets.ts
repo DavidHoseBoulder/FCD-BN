@@ -8,7 +8,7 @@ import { HEADERS } from '@/lib/sheets-constants';
 // The ID of your Google Sheet.
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 // The name of the sheet (tab) within your Google Sheet.
-const SHEET_NAME = 'Companies';
+const SHEET_NAME = process.env.SHEET_NAME || 'Companies';
 
 // Service account credentials are embedded directly.
 const credentials = {
@@ -31,7 +31,7 @@ async function getSheetsClient() {
 
 
 function parseRowToCompany(row: string[], rowNumber: number): Company | null {
-    if (!row || !row[0]) {
+    if (!row || row.length === 0 || row.every(cell => cell === '')) {
       return null;
     }
 
