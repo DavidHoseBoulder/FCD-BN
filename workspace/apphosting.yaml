@@ -6,7 +6,5 @@ runConfig:
   # more instances in response to increased traffic.
   maxInstances: 1
 env:
-  - variable: GOOGLE_SERVICE_ACCOUNT_EMAIL
-    secret: GOOGLE_SERVICE_ACCOUNT_EMAIL
-  - variable: GOOGLE_PRIVATE_KEY
-    secret: GOOGLE_PRIVATE_KEY
+  - variable: GOOGLE_APPLICATION_CREDENTIALS_JSON
+    secret: GOOGLE_APPLICATION_CREDENTIALS_JSON
