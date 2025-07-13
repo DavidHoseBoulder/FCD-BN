@@ -14,7 +14,9 @@ const SHEET_NAME = process.env.SHEET_NAME || 'Company List';
  * Uses a service account JSON string from environment variables.
  */
 async function getSheetsClient() {
-  const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  // Debugging: Log the value of the environment variable
+  console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON value:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ? 'SET' : 'NOT SET');
+  const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim(); // Trim whitespace before parsing
 
   if (!credentialsJsonString) {
     throw new Error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
