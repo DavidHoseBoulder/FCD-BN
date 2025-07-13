@@ -17,19 +17,26 @@ async function getSheetsClient() {
   const sa_email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   // The private key must have newlines replaced with actual newlines.
   // This handles both single-line format with escaped newlines and multi-line format.
-  const sa_key = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const sa_key_raw = process.env.GOOGLE_PRIVATE_KEY;
 
-  if (!sa_email || !sa_key) {
+  if (!sa_email || !sa_key_raw) {
     throw new Error('SA_KEY_NOT_SET: Google Service Account credentials are not set in environment variables.');
   }
+  
+  const sa_key = sa_key_raw.replace(/\\n/g, '\n');
 
-  const auth = new google.auth.JWT({
-    email: sa_email,
-    key: sa_key,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
+  try {
+    const auth = new google.auth.JWT({
+      email: sa_email,
+      key: sa_key,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
 
-  return google.sheets({ version: 'v4', auth });
+    return google.sheets({ version: 'v4', auth });
+  } catch (error: any) {
+    console.error('Failed to create Google Auth JWT client:', error);
+    throw new Error(`PRIVATE_KEY_PARSE_ERROR: Failed to parse Google private key. Please check the format. Original error: ${error.message}`);
+  }
 }
 
 
