@@ -1,5 +1,7 @@
 'use server';
 
+// Debugging: Log to indicate that this file is being executed
+console.log('sheets.ts is being executed');
 import type { Company } from '@/lib/data';
 import { google } from 'googleapis';
 import { HEADERS } from '@/lib/sheets-constants';
@@ -14,6 +16,7 @@ const SHEET_NAME = process.env.SHEET_NAME || 'Company List';
  * Uses a service account JSON string from environment variables.
  */
 async function getSheetsClient() {
+  console.log('Attempting to access GOOGLE_APPLICATION_CREDENTIALS_JSON...');
   // Debugging: Log the value of the environment variable
   console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON value:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ? 'SET' : 'NOT SET');
   const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim(); // Trim whitespace before parsing
@@ -69,8 +72,12 @@ function parseRowToCompany(row: string[], rowNumber: number): Company | null {
  * Fetches company data from the Google Sheet using the authenticated API.
  */
 export async function getCompaniesFromSheet(): Promise<Company[]> {
+    console.log('Starting getCompaniesFromSheet function.'); // Log at function start
     try {
+        console.log('Calling getSheetsClient to authenticate.'); // Log before getting client
         const sheets = await getSheetsClient();
+        console.log('Successfully obtained sheets client. Making API call to get data.'); // Log before API call
+        
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
             range: SHEET_NAME, // Request the entire sheet
@@ -95,8 +102,12 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
             companies.push(company);
           }
         });
+
+        console.log(`Finished fetching data. Found ${companies.length} companies.`); // Log after processing data
         
         return companies;
+
+    } catch (error: any) {
 
     } catch (error: any) {
        console.error('Error fetching sheet data via API:', error);

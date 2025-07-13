@@ -15,6 +15,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import DataCleaningView from '@/components/data-cleaning-view';
 
+console.log("Loading page.tsx module."); // Log when the module is loaded
+
 export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
   console.log("Executing Home page component."); // Added console log at the beginning
   let companyData: Company[] = [];
