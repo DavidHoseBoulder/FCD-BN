@@ -5,15 +5,19 @@
 /.pnp
 .pnp.js
 .yarn/install-state.gz
-.yarn/cache
+
+# testing
+/coverage
 
 # next.js
 /.next/
 /out/
 
+# production
+/build
+
 # misc
-/coverage
-/.DS_Store
+.DS_Store
 *.pem
 
 # debug
@@ -31,3 +35,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+src/services/service-account.json
