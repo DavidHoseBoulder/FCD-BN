@@ -47,6 +47,14 @@ Company Information:
 Based on the request and the company information, determine the new value for the column: "{{targetColumn}}".
 
 Return only the updated value for the specified column. If you cannot find the information, return an empty string.`,
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_ONLY_HIGH',
+      },
+    ],
+  },
 });
 
 const dataCleaningFlow = ai.defineFlow(
