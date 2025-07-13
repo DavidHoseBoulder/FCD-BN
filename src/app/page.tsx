@@ -24,8 +24,7 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
   const currentView = searchParams.view || 'dashboard';
 
   try {
-    // Temporary change for testing: returning empty array to bypass data fetching
-    companyData = []; 
+    companyData = await getCompaniesFromSheet();
   } catch (e: any) {
     console.log("Caught data fetching error on frontend:", e); // Added console log for debugging
     console.error(e);
