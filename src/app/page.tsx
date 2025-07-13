@@ -23,6 +23,7 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
   try {
     companyData = await getCompaniesFromSheet();
   } catch (e: any) {
+    console.log("Caught data fetching error on frontend:", e); // Added console log for debugging
     console.error(e);
     error = e.message || 'An unexpected error occurred.';
   }
