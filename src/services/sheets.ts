@@ -3,7 +3,6 @@
 
 import type { Company } from '@/lib/data';
 import { google } from 'googleapis';
-import { GoogleAuth } from 'google-auth-library';
 
 // The ID of your Google Sheet.
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
