@@ -4,7 +4,6 @@
 /node_modules
 /.pnp
 .pnp.js
-.yarn/install-state.gz
 
 # testing
 /coverage
@@ -24,7 +23,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 
 # local env files
 .env*.local
@@ -37,8 +35,5 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# workspace
-/workspace
-
-# Service Account Key
+# Project-specific
 src/services/service-account.json
