@@ -12,7 +12,7 @@ const SHEET_NAME = 'Companies';
 
 // This header list MUST match the columns in your Google Sheet exactly.
 // This is used to map column names to their index when updating a cell.
-const HEADERS = [
+export const HEADERS = [
   "Company Name", "Ecosystem Category", "Category", 
   "Management Team (CEO/Key Execs)", "Headquarters", "Funding/Investors", 
   "Key Customers / Segment", "Core Offering / Competitive Strengths", 

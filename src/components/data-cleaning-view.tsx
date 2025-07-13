@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,16 +8,20 @@ import { Company } from '@/lib/data';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
-import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { processDataCleaningRequest } from '@/ai/flows/process-data-cleaning-request';
 import { Progress } from './ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Combobox } from './ui/combobox';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   request: z.string().min(10, { message: 'Please provide a more detailed request.' }),
-  targetColumn: z.string().min(2, { message: 'Target column is required.' }),
+  targetColumn: z.string({ required_error: 'Please select a column to update.' }).min(1, { message: 'Please select a column to update.' }),
 });
 
 type DataCleaningResult = {
@@ -27,7 +31,7 @@ type DataCleaningResult = {
   error?: string;
 };
 
-export default function DataCleaningView({ companyData }: { companyData: Company[] }) {
+export default function DataCleaningView({ companyData, headers }: { companyData: Company[], headers: string[] }) {
   const [isProcessing, startProcessingTransition] = useTransition();
   const [results, setResults] = useState<DataCleaningResult[]>([]);
   const [progress, setProgress] = useState(0);
@@ -35,8 +39,12 @@ export default function DataCleaningView({ companyData }: { companyData: Company
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { request: '', targetColumn: '' },
+    defaultValues: { request: '' },
   });
+
+  const columnOptions = useMemo(() => {
+    return headers.map(header => ({ value: header, label: header }));
+  }, [headers]);
 
   const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
     setResults([]);
@@ -121,12 +129,59 @@ export default function DataCleaningView({ companyData }: { companyData: Company
                 control={form.control}
                 name="targetColumn"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Column to Update</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., 'Notes & Source (for Rev & Emp)'" {...field} />
-                    </FormControl>
-                     <FormMessage />
+                     <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? columnOptions.find(
+                                  (col) => col.value === field.value
+                                )?.label
+                              : "Select a column"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search columns..." />
+                          <CommandList>
+                            <CommandEmpty>No column found.</CommandEmpty>
+                            <CommandGroup>
+                              {columnOptions.map((col) => (
+                                <CommandItem
+                                  value={col.label}
+                                  key={col.value}
+                                  onSelect={() => {
+                                    form.setValue("targetColumn", col.value)
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      col.value === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {col.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
                   </FormItem>
                 )}
               />

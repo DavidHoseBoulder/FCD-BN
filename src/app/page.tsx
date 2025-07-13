@@ -1,7 +1,7 @@
 import { Company } from '@/lib/data';
 import DashboardClient from '@/components/dashboard-client';
 import Header from '@/components/header';
-import { getCompaniesFromSheet } from '@/services/sheets';
+import { getCompaniesFromSheet, HEADERS } from '@/services/sheets';
 import {
   Card,
   CardContent,
@@ -50,7 +50,7 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
     }
 
     if (currentView === 'datacleaning') {
-      return <DataCleaningView companyData={companyData} />;
+      return <DataCleaningView companyData={companyData} headers={HEADERS} />;
     }
     return <DashboardClient initialData={companyData} />;
   }
