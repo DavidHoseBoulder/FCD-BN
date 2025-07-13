@@ -25,6 +25,7 @@ WORKDIR /app
 # Copy build output from the builder stage
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next/server ./.next/server
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/public ./public
 
@@ -35,4 +36,4 @@ ENV GOOGLE_APPLICATION_CREDENTIALS_JSON="/app/secrets.json"
 EXPOSE 8080
 
 # Command to run your Next.js application in production mode
-CMD ["npm", "start"]
+CMD ["node", ".next/server/run.js"]
