@@ -61,19 +61,21 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
         const sheets = await getSheetsClient();
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
-            // Start from A2 to skip the header row
-            range: `${SHEET_NAME}!A2:Z`,
+            range: SHEET_NAME,
         });
 
-        const rows = response.data.values;
-        if (!rows || rows.length === 0) {
+        const allRows = response.data.values;
+        if (!allRows || allRows.length <= 1) { // <= 1 to account for only a header row
             return [];
         }
         
+        // Remove header row (the first row)
+        const dataRows = allRows.slice(1);
+
         const companies: Company[] = [];
-        rows.forEach((row, index) => {
+        dataRows.forEach((row, index) => {
           // The actual row number in the sheet is index + 2 
-          // (because our range starts at A2, and arrays are 0-indexed)
+          // (because we sliced off the header, and sheets are 1-indexed)
           const rowNumber = index + 2; 
           const company = parseRowToCompany(row, rowNumber);
 
