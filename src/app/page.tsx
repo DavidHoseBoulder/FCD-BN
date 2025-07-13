@@ -16,6 +16,7 @@ import { Terminal } from 'lucide-react';
 import DataCleaningView from '@/components/data-cleaning-view';
 
 export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
+  console.log("Executing Home page component."); // Added console log at the beginning
   let companyData: Company[] = [];
   let error: string | null = null;
   const currentView = searchParams.view || 'dashboard';
