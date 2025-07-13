@@ -1,0 +1,9 @@
+steps:
+  - name: 'gcr.io/cloud-builders/checkout'
+    args: ['--depth', '1']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/fcd-bn:$SHORT_SHA', '.']
+
+images:
+  - 'gcr.io/$PROJECT_ID/fcd-bn:$SHORT_SHA'
