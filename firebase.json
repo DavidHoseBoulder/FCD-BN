@@ -1,0 +1,14 @@
+{
+  "apphosting": {
+    "backendId": "fcd-bn",
+    "rootDir": "/",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "functions"
+    ],
+    "alwaysDeployFromSource": false
+  }
+}

@@ -108,8 +108,6 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
         return companies;
 
     } catch (error: any) {
-
-    } catch (error: any) {
        console.error('Error fetching sheet data via API:', error);
        // Re-throw with a more user-friendly message
        if (error.message.includes('Unable to parse range')) {
