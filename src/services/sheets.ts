@@ -17,9 +17,9 @@ const SHEET_NAME = process.env.SHEET_NAME || 'Company List';
  */
 async function getSheetsClient() {
   console.log('Attempting to access GOOGLE_APPLICATION_CREDENTIALS_JSON...');
-  // Debugging: Log the value of the environment variable
-  console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON value:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ? 'SET' : 'NOT SET');
   const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim(); // Trim whitespace before parsing
+  // Debugging: Log whether the environment variable was found after trimming
+  console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON value after trim:', credentialsJsonString ? 'SET' : 'NOT SET');
 
   if (!credentialsJsonString) {
     throw new Error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
@@ -43,6 +43,8 @@ async function getSheetsClient() {
       throw new Error(`INVALID_JSON: Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON. Please ensure it's a valid JSON string. Original error: ${error.message}`);
     }
     throw new Error(`Authentication failed: ${error.message}`);
+  } finally {
+    console.log('Finished attempting to getSheetsClient.'); // Log when the function finishes
   }
 }
 
