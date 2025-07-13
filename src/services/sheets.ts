@@ -7,7 +7,7 @@ import { HEADERS } from '@/lib/sheets-constants';
 // The ID of your Google Sheet, read from environment variables.
 const SHEET_ID = process.env.SHEET_ID || '1Ip8OXKy-pO-PP5l6utsK2kwcagNiDPgyKrSU1rnU2Cw';
 // The name of the sheet (tab), read from environment variables.
-const SHEET_NAME = process.env.SHEET_NAME || 'Companies';
+const SHEET_NAME = process.env.SHEET_NAME || 'Company List';
 
 /**
  * Initializes and returns an authenticated Google Sheets API client.
@@ -15,8 +15,9 @@ const SHEET_NAME = process.env.SHEET_NAME || 'Companies';
  */
 async function getSheetsClient() {
   const sa_email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  // The private key must have newlines replaced with actual newlines.
-  const sa_key = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  // The private key is read directly from the environment variable.
+  // It should be formatted correctly in the .env file (multi-line, wrapped in quotes).
+  const sa_key = process.env.GOOGLE_PRIVATE_KEY;
 
   if (!sa_email || !sa_key) {
     throw new Error('SA_KEY_NOT_SET: Google Service Account credentials are not set in environment variables.');
@@ -131,7 +132,7 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
         throw new Error("Could not determine the new row's ID after adding it.");
     }
     
-    // Extract the row number from the range string (e.g., 'Companies'!A82:K82 -> 82)
+    // Extract the row number from the range string (e.g., 'Company List'!A82:K82 -> 82)
     const match = updatedRange.match(/(\d+):/);
     if (!match || !match[1]) {
         throw new Error("Could not parse the new row number from the update response.");
