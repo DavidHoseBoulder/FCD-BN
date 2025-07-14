@@ -23,6 +23,7 @@ async function getSheetsClient() {
     console.error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
     throw new Error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
   } else {
+    // This will only log in local development, not in production.
     console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable found.');
   }
 
@@ -56,16 +57,21 @@ function parseRowToCompany(row: string[], rowNumber: number): Company | null {
     return {
         id: rowNumber,
         name: row[0] || '',
-        ecosystemCategory: row[1] || '',
-        category: row[2] || '',
-        ceo: row[3] || '',
-        headquarters: row[4] || '',
-        funding: row[5] || '',
-        customers: row[6] || '',
-        offering: row[7] || '',
-        areasAddressed: row[8] || '',
-        revenue: row[9] || '',
-        employees: row[10] || '',
+        url: row[1] || '',
+        targeting: row[2] || '',
+        ecosystemCategory: row[3] || '',
+        category: row[4] || '',
+        ceo: row[5] || '',
+        headquarters: row[6] || '',
+        funding: row[7] || '',
+        customers: row[8] || '',
+        offering: row[9] || '',
+        areasAddressed: row[10] || '',
+        revenue: row[11] || '',
+        employees: row[12] || '',
+        notes: row[13] || '',
+        pitchbookInfo: row[14] || '',
+        stillExists: row[15] || '',
     };
 }
 
@@ -80,7 +86,8 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
         
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
-            range: SHEET_NAME, // Request the entire sheet
+            // Fetch a wider range to accommodate all potential columns
+            range: `${SHEET_NAME}!A:Z`, 
         });
 
         const allRows = response.data.values;
@@ -89,8 +96,12 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
             return [];
         }
         
-        // Remove header row (the first row)
+        // Assume first row is the header
+        const headerRow = allRows[0];
         const dataRows = allRows.slice(1);
+
+        console.log("Sheet Header:", headerRow);
+
 
         const companies: Company[] = [];
         dataRows.forEach((row, index) => {
@@ -123,8 +134,11 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
 export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promise<Company> {
     const sheets = await getSheetsClient();
 
+    // The order here MUST match the HEADERS array
     const values = [[
         companyData.name,
+        companyData.url,
+        companyData.targeting,
         companyData.ecosystemCategory,
         companyData.category,
         companyData.ceo,
@@ -135,6 +149,9 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
         companyData.areasAddressed,
         companyData.revenue,
         companyData.employees,
+        companyData.notes,
+        companyData.pitchbookInfo,
+        companyData.stillExists
     ]];
 
     const appendResponse = await sheets.spreadsheets.values.append({
@@ -152,7 +169,7 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>): Promi
         throw new Error("Could not determine the new row's ID after adding it.");
     }
     
-    // Extract the row number from the range string (e.g., 'Company List'!A82:K82 -> 82)
+    // Extract the row number from the range string (e.g., 'Company List'!A82:P82 -> 82)
     const match = updatedRange.match(/(\d+):/);
     if (!match || !match[1]) {
         throw new Error("Could not parse the new row number from the update response.");
@@ -170,11 +187,12 @@ export async function updateSheetCell({ companyId, columnName, newValue }: { com
     const columnIndex = HEADERS.indexOf(columnName);
 
     if (columnIndex === -1) {
-        throw new Error(`Column "${columnName}" not found.`);
+        throw new Error(`Column "${columnName}" not found in HEADERS constant. The column name is case-sensitive.`);
     }
 
     const columnLetter = String.fromCharCode('A'.charCodeAt(0) + columnIndex);
     const range = `${SHEET_NAME}!${columnLetter}${companyId}`;
+    console.log(`Updating cell: ${range} with value: "${newValue}"`);
 
     await sheets.spreadsheets.values.update({
         spreadsheetId: SHEET_ID,

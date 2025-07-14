@@ -19,16 +19,13 @@ import { Textarea } from './ui/textarea';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Company name must be at least 2 characters.' }),
+  url: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
   ecosystemCategory: z.string().min(2, { message: 'Ecosystem category is required.' }),
-  category: z.string().optional(),
-  ceo: z.string().optional(),
   headquarters: z.string().min(2, { message: 'Headquarters is required.' }),
-  funding: z.string().optional(),
-  customers: z.string().optional(),
   offering: z.string().optional(),
-  areasAddressed: z.string().optional(),
-  revenue: z.string().optional(),
   employees: z.string().optional(),
+  revenue: z.string().optional(),
+  funding: z.string().optional(),
 });
 
 type AddCompanyFormProps = {
@@ -42,31 +39,34 @@ export function AddCompanyForm({ onSubmit }: AddCompanyFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      url: '',
       ecosystemCategory: '',
-      category: '',
-      ceo: '',
       headquarters: '',
-      funding: '',
-      customers: '',
       offering: '',
-      areasAddressed: '',
-      revenue: '',
       employees: '',
+      revenue: '',
+      funding: '',
     },
   });
 
   function handleFormSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
-        const fullCompanyData = {
+        const fullCompanyData: Omit<Company, 'id'> = {
           ...values,
-          category: values.category || '',
-          ceo: values.ceo || '',
-          funding: values.funding || '',
-          customers: values.customers || '',
+          // Fill in the rest of the fields with empty strings to match the Company type
+          targeting: '',
+          category: '',
+          ceo: '',
+          customers: '',
+          areasAddressed: '',
+          notes: '',
+          pitchbookInfo: '',
+          stillExists: '',
+          url: values.url || '',
           offering: values.offering || '',
-          areasAddressed: values.areasAddressed || '',
-          revenue: values.revenue || '',
           employees: values.employees || '',
+          revenue: values.revenue || '',
+          funding: values.funding || '',
         };
       await onSubmit(fullCompanyData);
       form.reset();
@@ -85,6 +85,19 @@ export function AddCompanyForm({ onSubmit }: AddCompanyFormProps) {
                 <FormLabel>Company Name</FormLabel>
                 <FormControl>
                   <Input placeholder="Innovate Inc." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="url"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>URL</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://innovate.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

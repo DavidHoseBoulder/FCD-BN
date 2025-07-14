@@ -7,10 +7,20 @@
 // This header list MUST match the columns in your Google Sheet exactly.
 // This is used to map column names to their index when updating a cell.
 export const HEADERS = [
-  "Timestamp",
   "Company Name",
+  "URL",
+  "Targeting",
   "Ecosystem Category",
   "Category",
+  "Management Team (CEO/Key Execs)",
   "Headquarters",
-  "Notes"
+  "Funding/Investors",
+  "Key Customers / Segment",
+  "Core Offering / Competitive Strengths",
+  "Areas Addressed",
+  "Est. Annual Revenue",
+  "# Employees",
+  "Notes & Source (for Rev & Emp)",
+  "PitchBook Info",
+  "Still Exists?"
 ];

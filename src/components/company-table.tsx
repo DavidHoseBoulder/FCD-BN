@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from './ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import Link from 'next/link';
 
 type SortDirection = 'asc' | 'desc';
 type SortKey = keyof Company | null;
@@ -106,12 +107,20 @@ export function CompanyTable({ data }: { data: Company[] }) {
       <TableBody>
         {sortedData.map((company) => (
           <TableRow key={company.id}>
-            <TableCell className="font-medium">{company.name}</TableCell>
+            <TableCell className="font-medium">
+              {company.url ? (
+                <Link href={company.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary">
+                  {company.name}
+                </Link>
+              ) : (
+                company.name
+              )}
+              </TableCell>
             <TableCell>{company.ecosystemCategory}</TableCell>
             <TableCell>{company.headquarters}</TableCell>
             <TableCell>{company.employees}</TableCell>
             <TableCell>{company.funding}</TableCell>
-            <TableCell className="font-semibold text-primary">{company.revenue}</TableCell>
+            <TableCell className="font-semibold">{company.revenue}</TableCell>
           </TableRow>
         ))}
       </TableBody>
