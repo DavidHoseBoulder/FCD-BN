@@ -1,0 +1,9 @@
+[debug] [2025-07-14T18:56:49.640Z] ----------------------------------------------------------------------
+[debug] [2025-07-14T18:56:49.644Z] Command:       /nix/store/rbdrkcs5kkwpalxcd7c6bnm33lk2955n-nodejs-20.19.0/bin/node /home/user/.global_modules/bin/firebase deploy --only apphosting:fcd-bn
+[debug] [2025-07-14T18:56:49.645Z] CLI Version:   14.10.1
+[debug] [2025-07-14T18:56:49.645Z] Platform:      linux
+[debug] [2025-07-14T18:56:49.645Z] Node Version:  v20.19.0
+[debug] [2025-07-14T18:56:49.645Z] Time:          Mon Jul 14 2025 18:56:49 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-07-14T18:56:49.645Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-14T18:56:50.174Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]

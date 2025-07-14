@@ -18,8 +18,10 @@ import DataCleaningView from '@/components/data-cleaning-view';
 console.log("Loading page.tsx module."); // Log when the module is loaded
 
 export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
-  console.log("Executing Home page component."); // Added console log at the beginning
+  console.log("src/app/page.tsx: Executing Home page component."); // Added console log at the beginning
   let companyData: Company[] = [];
+  console.log("src/app/page.tsx: Initialized companyData and error.");
+  const params = await searchParams;
   let error: string | null = null;
   const currentView = searchParams.view || 'dashboard';
 
@@ -27,12 +29,14 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
     companyData = await getCompaniesFromSheet();
   } catch (e: any) {
     console.log("Caught data fetching error on frontend:", e); // Added console log for debugging
-    console.error(e);
+    console.error("src/app/page.tsx: Data fetching error:", e);
     error = e.message || 'An unexpected error occurred.';
   }
+  console.log("src/app/page.tsx: Finished data fetching attempt.");
 
   const renderContent = () => {
-    if (error) {
+    console.log("src/app/page.tsx: Inside renderContent function. Current error state:", error);
+    if (error) { // Moved examination of this logic to after diff application.
        return (
           <Card>
             <CardHeader>
