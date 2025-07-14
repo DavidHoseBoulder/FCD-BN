@@ -11,6 +11,7 @@ export const DataCleaningRequestInputSchema = z.object({
   request: z.string().describe('The user\'s request for data cleaning. e.g., "Find the LinkedIn URL for each company."'),
   targetColumn: z.string().describe('The name of the column in the Google Sheet to update.'),
   company: z.custom<Company>().describe('The company data to process.'),
+  headers: z.array(z.string()).describe('The header row from the Google Sheet.'),
 });
 export type DataCleaningRequestInput = z.infer<typeof DataCleaningRequestInputSchema>;
 

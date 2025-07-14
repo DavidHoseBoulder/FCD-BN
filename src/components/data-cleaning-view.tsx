@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useMemo } from 'react';
+import { useState, useTransition, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,7 +32,9 @@ type DataCleaningResult = {
 };
 
 export default function DataCleaningView({ companyData, headers }: { companyData: Company[], headers: string[] }) {
+  console.log("DataCleaningView headers prop:", headers);
   const [isProcessing, startProcessingTransition] = useTransition();
+  const [showColumnList, setShowColumnList] = useState(false);
   const [results, setResults] = useState<DataCleaningResult[]>([]);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
@@ -43,8 +45,15 @@ export default function DataCleaningView({ companyData, headers }: { companyData
   });
 
   const columnOptions = useMemo(() => {
+    console.log("DataCleaningView calculating columnOptions. headers:", headers, "columnOptions length:", headers.length);
     return headers.map(header => ({ value: header, label: header }));
   }, [headers]);
+
+  useEffect(() => {
+    if (columnOptions.length > 0) {
+      setShowColumnList(true);
+    }
+  }, [columnOptions]);
 
   const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
     setResults([]);
@@ -56,7 +65,7 @@ export default function DataCleaningView({ companyData, headers }: { companyData
 
       for (const company of companyData) {
         try {
-          const result = await processDataCleaningRequest({ ...values, company });
+          const result = await processDataCleaningRequest({ ...values, company, headers });
           newResults.push({
             companyName: company.name,
             updatedValue: result.updatedValue,
@@ -152,30 +161,28 @@ export default function DataCleaningView({ companyData, headers }: { companyData
                       </PopoverTrigger>
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                         <Command>
-                          <CommandInput placeholder="Search columns..." />
+                          {/* Removed CommandInput as per previous instruction */}
+                          {/* <CommandInput placeholder="Search columns..." /> */}
                           <CommandList>
-                            <CommandEmpty>No column found.</CommandEmpty>
-                            <CommandGroup>
-                              {columnOptions.map((col) => (
-                                <CommandItem
-                                  value={col.label}
-                                  key={col.value}
-                                  onSelect={() => {
-                                    form.setValue("targetColumn", col.value)
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      col.value === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    )}
-                                  />
-                                  {col.label}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
+                             <CommandEmpty>{columnOptions.length === 0 ? 'No column found.' : 'No search results.'}</CommandEmpty>
+                            {headers && headers.length > 0 && (
+                              <CommandGroup>
+                                {columnOptions.map((col) => (
+                                  <CommandItem
+                                    value={col.value} // Use col.value for consistency
+                                    key={col.value}
+                                    onSelect={() => {
+                                      form.setValue("targetColumn", col.value);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn("mr-2 h-4 w-4", col.value === field.value ? "opacity-100" : "opacity-0")}
+                                    />
+                                    {col.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            )}
                           </CommandList>
                         </Command>
                       </PopoverContent>

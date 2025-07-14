@@ -25,6 +25,7 @@ export async function processDataCleaningRequest(input: DataCleaningRequestInput
       companyId: input.company.id,
       columnName: input.targetColumn,
       newValue: result.updatedValue,
+      headers: input.headers, // Pass headers here
     });
   }
 

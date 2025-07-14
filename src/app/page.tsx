@@ -3,7 +3,6 @@ import { Company } from '@/lib/data';
 import DashboardClient from '@/components/dashboard-client';
 import Header from '@/components/header';
 import { getCompaniesFromSheet } from '@/services/sheets';
-import { HEADERS } from '@/lib/sheets-constants';
 import {
   Card,
   CardContent,
@@ -17,12 +16,13 @@ import DataCleaningView from '@/components/data-cleaning-view';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
+  let headers: string[] = [];
   let companyData: Company[] | null = null;
   let error: string | null = null;
   const currentView = (await searchParams).view || 'dashboard';
-
+  
   try {
-    companyData = await getCompaniesFromSheet();
+    ({ headers, companies: companyData } = await getCompaniesFromSheet());
   } catch (e: any) {
     console.error("Data fetching error in page.tsx:", e);
     error = e.message || 'An unexpected error occurred.';
@@ -60,9 +60,9 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
     }
 
     if (currentView === 'datacleaning') {
-      return <DataCleaningView companyData={companyData} headers={HEADERS} />;
+      return <DataCleaningView companyData={companyData} headers={headers} />;
     }
-    return <DashboardClient initialData={companyData} />;
+    return <DashboardClient initialData={companyData} headers={headers} />;
   }
 
 

@@ -1,21 +1,20 @@
 'use client';
 
-import type { Company } from '@/lib/data';
+import type { Company } from '@/lib/data'; // Ensure Company type is imported
+import { useState, useMemo, useCallback, type ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
+  ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig
 } from '@/components/ui/chart';
 import { Pie, PieChart, Sector, Cell } from 'recharts';
-import { useState, useCallback, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 
 type DataSummaryProps = {
   data: Company[];
   selectedEcosystem: string | null;
   onEcosystemSelect: (category: string) => void;
+  headers: string[]; // Add headers prop
 };
 
 const revenueBuckets = {
@@ -60,18 +59,16 @@ const ActiveShape = (props: any) => {
     </g>
   );
 };
-
-
-export function DataSummary({ data, selectedEcosystem, onEcosystemSelect }: DataSummaryProps) {
+export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, headers }: DataSummaryProps) {
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
-  
-  const totalCompanies = data.length;
+  // Find the correct header name for Ecosystem Category (assuming a standard name or similar)
+  const ecosystemHeader = headers.find(h => h.toLowerCase().includes('ecosystem')) || 'Ecosystem Category';
 
-  const ecosystemCounts = data.reduce((acc, company) => {
-    const category = company.ecosystemCategory || 'Uncategorized';
+  const ecosystemCounts = (data && Array.isArray(data)) ? data.reduce((acc, company) => {
+    const category = company[ecosystemHeader] || 'Uncategorized';
     acc[category] = (acc[category] || 0) + 1;
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, number>) : {};
 
   const sortedEcosystems = Object.entries(ecosystemCounts).sort(([, a], [, b]) => b - a);
 
@@ -87,14 +84,16 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect }: Data
     };
     return acc;
   }, {} as ChartConfig), [chartData]);
-  
+  // Find the correct header name for Revenue (assuming a standard name or similar)
+ const revenueHeader = headers.find(h => h.toLowerCase().includes('revenue')) || 'Est. Annual Revenue';
 
-  const revenueCounts = data.reduce((acc, company) => {
-    const revenueStr = company.revenue || '';
+  const revenueCounts = (data && Array.isArray(data)) ? data.reduce((acc, company) => {
+    const revenueStr = company[revenueHeader] || '';
     const bucket = revenueMapping[revenueStr] || 'Unknown';
     acc[bucket] = (acc[bucket] || 0) + 1;
     return acc;
-  }, { ...revenueBuckets } as Record<string, number>);
+  }, { ...revenueBuckets } as Record<string, number>)
+  : { ...revenueBuckets };
 
   const handlePieClick = useCallback((_: any, index: number) => {
       const category = chartData[index].name;
@@ -103,7 +102,7 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect }: Data
     },
     [onEcosystemSelect, chartData, activeIndex]
   );
-  
+
   const handleMouseEnter = useCallback((_: any, index: number) => {
     setActiveIndex(index);
   }, []);
@@ -112,9 +111,10 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect }: Data
     setActiveIndex(undefined);
   }, []);
 
+  const totalCompanies = data?.length ?? 0;
   return (
     <div className="grid gap-6 md:grid-cols-3">
-       <Card>
+      <Card>
         <CardHeader>
           <CardTitle>Total Companies</CardTitle>
         </CardHeader>

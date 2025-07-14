@@ -13,7 +13,7 @@ import { AddCompanyForm } from './add-company-form';
 import { addCompanyToSheet } from '@/services/sheets';
 import { DataSummary } from './data-summary';
 
-export default function DashboardClient({ initialData }: { initialData: Company[] }) {
+export default function DashboardClient({ initialData, headers }: { initialData: Company[], headers: string[] }) {
   const [data, setData] = useState<Company[]>(initialData);
   const [insights, setInsights] = useState<string | null>(null);
   const [isGeneratingInsights, startInsightsTransition] = useTransition();
@@ -76,9 +76,11 @@ export default function DashboardClient({ initialData }: { initialData: Company[
   };
 
 
+
   return (
     <div className="grid gap-6">
       <DataSummary
+        headers={headers}
         data={data} 
         onEcosystemSelect={handleEcosystemSelect}
         selectedEcosystem={selectedEcosystem}
@@ -122,9 +124,9 @@ export default function DashboardClient({ initialData }: { initialData: Company[
           <div>
             <CardTitle>Company Data</CardTitle>
             <CardDescription>
-              {selectedEcosystem 
-                ? `${filteredData.length} companies in ${selectedEcosystem}`
-                : `A list of all ${data.length} companies from your sheet.`}
+              {selectedEcosystem
+                ? `${filteredData?.length ?? 0} companies in ${selectedEcosystem}`
+                : `A list of all ${data?.length ?? 0} companies from your sheet.`}
             </CardDescription>
           </div>
           <Button onClick={() => setShowAddForm(!showAddForm)} variant="outline">
@@ -138,7 +140,7 @@ export default function DashboardClient({ initialData }: { initialData: Company[
                 <AddCompanyForm onSubmit={handleAddCompany} />
             </div>
            )}
-          <CompanyTable key={`${selectedEcosystem}-${filteredData.length}`} data={filteredData} />
+          {filteredData && <CompanyTable key={`${selectedEcosystem}-${filteredData.length}`} data={filteredData} headers={headers} />}
         </CardContent>
       </Card>
     </div>
