@@ -13,7 +13,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    console.log("RootLayout is executing. GOOGLE_APPLICATION_CREDENTIALS_JSON:", process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
     <html lang="en" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />

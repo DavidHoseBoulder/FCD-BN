@@ -78,7 +78,7 @@ export default function DashboardClient({ initialData }: { initialData: Company[
 
   return (
     <div className="grid gap-6">
-      <DataSummary 
+      <DataSummary
         data={data} 
         onEcosystemSelect={handleEcosystemSelect}
         selectedEcosystem={selectedEcosystem}
@@ -138,7 +138,7 @@ export default function DashboardClient({ initialData }: { initialData: Company[
                 <AddCompanyForm onSubmit={handleAddCompany} />
             </div>
            )}
-          <CompanyTable data={filteredData} />
+          <CompanyTable key={`${selectedEcosystem}-${filteredData.length}`} data={filteredData} />
         </CardContent>
       </Card>
     </div>

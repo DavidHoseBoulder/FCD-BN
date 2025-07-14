@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
   let companyData: Company[] | null = null;
   let error: string | null = null;
-  const currentView = searchParams.view || 'dashboard';
+  const currentView = (await searchParams).view || 'dashboard';
 
   try {
     companyData = await getCompaniesFromSheet();
