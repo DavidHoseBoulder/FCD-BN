@@ -22,10 +22,7 @@ async function getSheetsClient() {
   if (!credentialsJsonString) {
     console.error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
     throw new Error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
-  } else {
-    // This will only log in local development, not in production.
-    console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable found.');
-  }
+  } 
 
   try {
     const credentials = JSON.parse(credentialsJsonString);
@@ -79,7 +76,6 @@ function parseRowToCompany(row: string[], rowNumber: number): Company | null {
  * Fetches company data from the Google Sheet using the authenticated API.
  */
 export async function getCompaniesFromSheet(): Promise<Company[]> {
-    console.log('Starting getCompaniesFromSheet function.');
     try {
         const sheets = await getSheetsClient();
         console.log('Making API call to get sheet data.');
