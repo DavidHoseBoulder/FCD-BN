@@ -8,16 +8,18 @@
 
 import { ai } from '@/ai/genkit';
 import { updateSheetCell } from '@/services/sheets';
-import { 
-  DataCleaningRequestInput, 
-  DataCleaningRequestInputSchema, 
-  DataCleaningRequestOutput, 
-  DataCleaningRequestOutputSchema 
+import {
+  DataCleaningRequestInput,
+  DataCleaningRequestInputSchema,
+  DataCleaningRequestOutput,
+  DataCleaningRequestOutputSchema
 } from '@/lib/data-cleaning-types';
 
 export async function processDataCleaningRequest(input: DataCleaningRequestInput): Promise<DataCleaningRequestOutput> {
+  console.log('processDataCleaningRequest: Starting with input:', input);
   const result = await dataCleaningFlow(input);
-  
+  console.log('processDataCleaningRequest: Received result from dataCleaningFlow:', result);
+
   if (result.updatedValue) {
     await updateSheetCell({
       companyId: input.company.id,
@@ -64,7 +66,14 @@ const dataCleaningFlow = ai.defineFlow(
     outputSchema: DataCleaningRequestOutputSchema,
   },
   async (input) => {
-    const { output } = await cleaningPrompt(input);
-    return output!;
+    console.log('dataCleaningFlow: Sending input to cleaningPrompt:', input);
+    try {
+      const { output } = await cleaningPrompt(input);
+      console.log('dataCleaningFlow: Received output from cleaningPrompt:', output);
+      return output!;
+    } catch (error) {
+      console.error('dataCleaningFlow: Error during cleaningPrompt execution:', error);
+      throw error; // Re-throw the error so it can be caught and handled by the caller
+    }
   }
 );

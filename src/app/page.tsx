@@ -1,4 +1,4 @@
-// Temporary change to trigger redeploy
+
 import { Company } from '@/lib/data';
 import DashboardClient from '@/components/dashboard-client';
 import Header from '@/components/header';
@@ -14,29 +14,22 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import DataCleaningView from '@/components/data-cleaning-view';
-
-console.log("Loading page.tsx module."); // Log when the module is loaded
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
-  console.log("src/app/page.tsx: Executing Home page component."); // Added console log at the beginning
-  let companyData: Company[] = [];
-  console.log("src/app/page.tsx: Initialized companyData and error.");
-  const params = await searchParams;
+  let companyData: Company[] | null = null;
   let error: string | null = null;
   const currentView = searchParams.view || 'dashboard';
 
   try {
     companyData = await getCompaniesFromSheet();
   } catch (e: any) {
-    console.log("Caught data fetching error on frontend:", e); // Added console log for debugging
-    console.error("src/app/page.tsx: Data fetching error:", e);
+    console.error("Data fetching error in page.tsx:", e);
     error = e.message || 'An unexpected error occurred.';
   }
-  console.log("src/app/page.tsx: Finished data fetching attempt.");
 
   const renderContent = () => {
-    console.log("src/app/page.tsx: Inside renderContent function. Current error state:", error);
-    if (error) { // Moved examination of this logic to after diff application.
+    if (error) {
        return (
           <Card>
             <CardHeader>
@@ -53,6 +46,16 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
               </Alert>
             </CardContent>
           </Card>
+        )
+    }
+
+    if (!companyData) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-96 w-full" />
+            </div>
         )
     }
 
