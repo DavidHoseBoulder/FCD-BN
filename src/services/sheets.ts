@@ -16,35 +16,34 @@ const SHEET_NAME = process.env.SHEET_NAME || 'Company List';
  * Uses a service account JSON string from environment variables.
  */
 async function getSheetsClient() {
-  console.log('Attempting to access GOOGLE_APPLICATION_CREDENTIALS_JSON...');
-  const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim(); // Trim whitespace before parsing
-  // Debugging: Log whether the environment variable was found after trimming
-  console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON value after trim:', credentialsJsonString ? 'SET' : 'NOT SET');
+  console.log('Attempting to initialize Google Sheets client...');
+  const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
   if (!credentialsJsonString) {
+    console.error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
     throw new Error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
+  } else {
+    console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable found.');
   }
 
   try {
     const credentials = JSON.parse(credentialsJsonString);
+    console.log(`Successfully parsed credentials for project: ${credentials.project_id}`);
 
     const auth = google.auth.fromJSON(credentials);
     if (auth === null) {
-      // This case should not be hit if credentials are valid JSON, but it's good practice.
-      throw new Error('Google Auth client is null. Check credentials.');
+      throw new Error('Google Auth client is null after parsing JSON. Check credentials format.');
     }
     // @ts-ignore - The type of auth is broad, but fromJSON provides a client with scopes.
     auth.scopes = ['https://www.googleapis.com/auth/spreadsheets'];
-
+    console.log('Google Sheets client initialized successfully.');
     return google.sheets({ version: 'v4', auth });
   } catch (error: any) {
-    console.error('Failed to initialize Google Sheets client:', error);
+    console.error('Failed to initialize Google Sheets client from JSON:', error);
     if (error instanceof SyntaxError) {
-      throw new Error(`INVALID_JSON: Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON. Please ensure it's a valid JSON string. Original error: ${error.message}`);
+      throw new Error(`INVALID_JSON: Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON. Please ensure it's a valid JSON string on a single line. Original error: ${error.message}`);
     }
     throw new Error(`Authentication failed: ${error.message}`);
-  } finally {
-    console.log('Finished attempting to getSheetsClient.'); // Log when the function finishes
   }
 }
 
@@ -74,11 +73,10 @@ function parseRowToCompany(row: string[], rowNumber: number): Company | null {
  * Fetches company data from the Google Sheet using the authenticated API.
  */
 export async function getCompaniesFromSheet(): Promise<Company[]> {
-    console.log('Starting getCompaniesFromSheet function.'); // Log at function start
+    console.log('Starting getCompaniesFromSheet function.');
     try {
-        console.log('Calling getSheetsClient to authenticate.'); // Log before getting client
         const sheets = await getSheetsClient();
-        console.log('Successfully obtained sheets client. Making API call to get data.'); // Log before API call
+        console.log('Making API call to get sheet data.');
         
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
@@ -87,6 +85,7 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
 
         const allRows = response.data.values;
         if (!allRows || allRows.length <= 1) { // <= 1 to account for only a header row
+            console.log('Sheet is empty or only contains a header.');
             return [];
         }
         
@@ -105,15 +104,14 @@ export async function getCompaniesFromSheet(): Promise<Company[]> {
           }
         });
 
-        console.log(`Finished fetching data. Found ${companies.length} companies.`); // Log after processing data
+        console.log(`Finished fetching data. Found ${companies.length} companies.`);
         
         return companies;
 
     } catch (error: any) {
        console.error('Error fetching sheet data via API:', error);
-       // Re-throw with a more user-friendly message
        if (error.message.includes('Unable to parse range')) {
-           throw new Error(`Could not find sheet named "${SHEET_NAME}". Please check your .env file and Google Sheet.`);
+           throw new Error(`Could not find sheet named "${SHEET_NAME}". Please check your SHEET_NAME environment variable and Google Sheet.`);
        }
        throw new Error(`Could not load data from Google Sheet: ${error.message}`);
     }
