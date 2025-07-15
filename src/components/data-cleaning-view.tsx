@@ -28,7 +28,7 @@ const formSchema = z.object({
 type DataCleaningResult = {
   companyName: string;
   updatedValue: string;
-  status: 'success' | 'error';
+  status: 'Processed' | 'error';
   error?: string;
 };
 
@@ -69,9 +69,9 @@ export default function DataCleaningView({ companyData, headers }: { companyData
         try {
           const result = await processDataCleaningRequest({ ...values, company, headers, model: selectedModel });
           newResults.push({
-            companyName: company.name,
+            companyName: company['Company Name'] as string,
             updatedValue: result.updatedValue,
-            status: 'success',
+            status: 'Processed',
           });
         } catch (error: any) {
           let errorMessage = 'An AI processing error occurred.';
@@ -79,7 +79,7 @@ export default function DataCleaningView({ companyData, headers }: { companyData
             errorMessage = 'Service account not configured. Cannot write to sheet.';
           }
           newResults.push({
-            companyName: company.name,
+            companyName: company['Company Name'] as string,
             updatedValue: '',
             status: 'error',
             error: errorMessage,
@@ -230,9 +230,9 @@ export default function DataCleaningView({ companyData, headers }: { companyData
                                 {results.map((result, index) => (
                                     <TableRow key={index}>
                                         <TableCell className="font-medium">{result.companyName}</TableCell>
-                                        <TableCell>{result.updatedValue}</TableCell>
+                                        <TableCell>{result.updatedValue || "N/A"}</TableCell>
                                         <TableCell className={result.status === 'error' ? 'text-destructive' : 'text-green-500'}>
-                                            {result.status === 'success' ? 'Success' : `Error: ${result.error}`}
+                                            {result.status === 'Processed' ? 'Processed' : `Error: ${result.error}`}
                                         </TableCell>
                                     </TableRow>
                                 ))}
