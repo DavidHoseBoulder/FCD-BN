@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const MODELS = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest'];
+const MODELS = ['googleai/gemini-1.5-flash-latest', 'googleai/gemini-1.5-pro-latest'];
 const STORAGE_KEY = 'selectedGenkitModel';
 
 export function useModelSelection() {
