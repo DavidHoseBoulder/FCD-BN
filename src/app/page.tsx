@@ -15,6 +15,10 @@ import { Terminal } from 'lucide-react';
 import DataCleaningView from '@/components/data-cleaning-view';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// This tells Next.js not to cache the data from this page.
+// It will re-fetch from the Google Sheet on every request.
+export const revalidate = 0;
+
 export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
   let headers: string[] = [];
   let companyData: Company[] | null = null;
