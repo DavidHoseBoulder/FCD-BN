@@ -41,7 +41,7 @@ Provide a concise summary of the key trends, patterns, and actionable insights d
     
     const { output } = await ai.generate({
       prompt,
-      model: model ? ai.model(model) : ai.model('gemini-1.5-flash-latest'),
+      model: model, // Corrected: Pass model string directly
       output: {
         schema: GenerateInsightsOutputSchema,
       },
