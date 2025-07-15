@@ -17,7 +17,7 @@ async function getSheetsClient() {
   const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
   if (!credentialsJsonString) {
-    const errorMsg = 'CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.';
+    const errorMsg = 'CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set for local development. Please create a .env.local file with the service account JSON.';
     console.error(errorMsg);
     throw new Error(errorMsg);
   }
@@ -34,8 +34,6 @@ async function getSheetsClient() {
     return google.sheets({ 
         version: 'v4', 
         auth: authClient,
-        // Force fetch to bypass any potential caching
-        fetch_options: { cache: 'no-store' }
     });
   } catch (error: any) {
     console.error('Failed to initialize Google Sheets client from JSON:', error);
@@ -78,6 +76,9 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
             range: `${SHEET_NAME}!A:Z`, 
+        }, {
+            // Force fetch to bypass any potential caching
+            headers: { 'Cache-Control': 'no-store' }
         });
 
         const allRows = response.data.values;
