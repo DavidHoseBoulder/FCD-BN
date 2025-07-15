@@ -12,6 +12,7 @@ import { Skeleton } from './ui/skeleton';
 import { AddCompanyForm } from './add-company-form';
 import { addCompanyToSheet } from '@/services/sheets';
 import { DataSummary } from './data-summary';
+import { useModelSelection } from '@/hooks/use-model-selection';
 
 export default function DashboardClient({ initialData, headers }: { initialData: Company[], headers: string[] }) {
   const [data, setData] = useState<Company[]>(initialData);
@@ -20,6 +21,7 @@ export default function DashboardClient({ initialData, headers }: { initialData:
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedEcosystem, setSelectedEcosystem] = useState<string | null>(null);
   const { toast } = useToast();
+  const { selectedModel } = useModelSelection();
 
   const handleEcosystemSelect = (category: string) => {
     setSelectedEcosystem((prev) => (prev === category ? null : category));
@@ -36,7 +38,10 @@ export default function DashboardClient({ initialData, headers }: { initialData:
     startInsightsTransition(async () => {
       try {
         const jsonString = JSON.stringify(filteredData);
-        const result = await generateInsights({ companyData: jsonString });
+        const result = await generateInsights({ 
+          companyData: jsonString,
+          model: selectedModel 
+        });
         setInsights(result.insights);
       } catch (error) {
         console.error('Error generating insights:', error);

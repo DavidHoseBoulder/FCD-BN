@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const GenerateInsightsInputSchema = z.object({
   companyData: z.string().describe('A JSON string containing an array of company objects.'),
+  model: z.string().optional().describe('The name of the model to use for generation.'),
 });
 export type GenerateInsightsInput = z.infer<typeof GenerateInsightsInputSchema>;
 
@@ -22,21 +23,8 @@ const GenerateInsightsOutputSchema = z.object({
 export type GenerateInsightsOutput = z.infer<typeof GenerateInsightsOutputSchema>;
 
 export async function generateInsights(input: GenerateInsightsInput): Promise<GenerateInsightsOutput> {
-  console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON is available:', !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
   return generateInsightsFlow(input);
 }
-
-const prompt = ai.definePrompt({
-  name: 'generateInsightsPrompt',
-  input: {schema: GenerateInsightsInputSchema},
-  output: {schema: GenerateInsightsOutputSchema},
-  prompt: `You are an expert business analyst for the financial technology sector. Generate insights from the following company data. The data is in JSON format.
-
-Data: {{{companyData}}}
-
-Provide a concise summary of the key trends, patterns, and actionable insights derived from the data. Focus on aspects like ecosystem category distribution, common headquarters locations, funding trends (e.g., bootstrapped vs. venture-backed), and employee count ranges.
-`,
-});
 
 const generateInsightsFlow = ai.defineFlow(
   {
@@ -44,8 +32,21 @@ const generateInsightsFlow = ai.defineFlow(
     inputSchema: GenerateInsightsInputSchema,
     outputSchema: GenerateInsightsOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async ({ companyData, model }) => {
+    const prompt = `You are an expert business analyst for the financial technology sector. Generate insights from the following company data. The data is in JSON format.
+
+Data: ${companyData}
+
+Provide a concise summary of the key trends, patterns, and actionable insights derived from the data. Focus on aspects like ecosystem category distribution, common headquarters locations, funding trends (e.g., bootstrapped vs. venture-backed), and employee count ranges.`;
+    
+    const { output } = await ai.generate({
+      prompt,
+      model: model ? ai.model(model) : ai.model('gemini-1.5-flash-latest'),
+      output: {
+        schema: GenerateInsightsOutputSchema,
+      },
+    });
+
     return output!;
   }
 );

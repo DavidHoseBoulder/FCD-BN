@@ -18,6 +18,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useModelSelection } from '@/hooks/use-model-selection';
 
 const formSchema = z.object({
   request: z.string().min(10, { message: 'Please provide a more detailed request.' }),
@@ -38,6 +39,7 @@ export default function DataCleaningView({ companyData, headers }: { companyData
   const [results, setResults] = useState<DataCleaningResult[]>([]);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
+  const { selectedModel } = useModelSelection();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,7 +67,7 @@ export default function DataCleaningView({ companyData, headers }: { companyData
 
       for (const company of companyData) {
         try {
-          const result = await processDataCleaningRequest({ ...values, company, headers });
+          const result = await processDataCleaningRequest({ ...values, company, headers, model: selectedModel });
           newResults.push({
             companyName: company.name,
             updatedValue: result.updatedValue,

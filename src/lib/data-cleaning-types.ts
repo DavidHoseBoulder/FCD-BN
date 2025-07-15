@@ -12,6 +12,7 @@ export const DataCleaningRequestInputSchema = z.object({
   targetColumn: z.string().describe('The name of the column in the Google Sheet to update.'),
   company: z.custom<Company>().describe('The company data to process.'),
   headers: z.array(z.string()).describe('The header row from the Google Sheet.'),
+  model: z.string().optional().describe('The name of the model to use for generation.'),
 });
 export type DataCleaningRequestInput = z.infer<typeof DataCleaningRequestInputSchema>;
 

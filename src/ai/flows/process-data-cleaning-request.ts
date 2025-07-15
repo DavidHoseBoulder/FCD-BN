@@ -16,9 +16,7 @@ import {
 } from '@/lib/data-cleaning-types';
 
 export async function processDataCleaningRequest(input: DataCleaningRequestInput): Promise<DataCleaningRequestOutput> {
-  console.log('processDataCleaningRequest: Starting with input:', input);
   const result = await dataCleaningFlow(input);
-  console.log('processDataCleaningRequest: Received result from dataCleaningFlow:', result);
 
   if (result.updatedValue) {
     await updateSheetCell({
@@ -32,48 +30,47 @@ export async function processDataCleaningRequest(input: DataCleaningRequestInput
   return result;
 }
 
-const cleaningPrompt = ai.definePrompt({
-  name: 'dataCleaningPrompt',
-  input: { schema: DataCleaningRequestInputSchema },
-  output: { schema: DataCleaningRequestOutputSchema },
-  prompt: `You are an expert data analyst and researcher. Your task is to fulfill the user's request for a single company based on the data provided.
-
-User Request: "{{request}}"
-
-Company Information:
-- Name: {{company.name}}
-- Headquarters: {{company.headquarters}}
-- Core Offering: {{company.offering}}
-- Category: {{company.category}}
-- Website (if available in offering): Analyze the core offering to find a potential website.
-
-Based on the request and the company information, determine the new value for the column: "{{targetColumn}}".
-
-IMPORTANT: Your response MUST be a JSON object with a single key "updatedValue". If you cannot find the information or are unsure, return an empty string for the "updatedValue", like this: { "updatedValue": "" }. Do not provide explanations or refuse to answer.`,
-  config: {
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_ONLY_HIGH',
-      },
-    ],
-  },
-});
-
 const dataCleaningFlow = ai.defineFlow(
   {
     name: 'dataCleaningFlow',
     inputSchema: DataCleaningRequestInputSchema,
     outputSchema: DataCleaningRequestOutputSchema,
   },
-  async (input) => {
-    console.log('dataCleaningFlow: Sending input to cleaningPrompt:', input);
+  async ({ request, targetColumn, company, headers, model }) => {
+    const prompt = `You are an expert data analyst and researcher. Your task is to fulfill the user's request for a single company based on the data provided.
+
+User Request: "${request}"
+
+Company Information:
+- Name: ${company.name}
+- Headquarters: ${company.headquarters}
+- Core Offering: ${company.offering}
+- Category: ${company.category}
+- Website (if available in offering): Analyze the core offering to find a potential website.
+
+Based on the request and the company information, determine the new value for the column: "${targetColumn}".
+
+IMPORTANT: Your response MUST be a JSON object with a single key "updatedValue". If you cannot find the information or are unsure, return an empty string for the "updatedValue", like this: { "updatedValue": "" }. Do not provide explanations or refuse to answer.`;
+
     try {
-      const { output } = await cleaningPrompt(input);
-      console.log('dataCleaningFlow: Received output from cleaningPrompt:', output);
+      const { output } = await ai.generate({
+        prompt,
+        model: model ? ai.model(model) : ai.model('gemini-1.5-flash-latest'),
+        output: {
+          schema: DataCleaningRequestOutputSchema,
+        },
+        config: {
+          safetySettings: [
+            {
+              category: 'HARM_CATEGORY_HARASSMENT',
+              threshold: 'BLOCK_ONLY_HIGH',
+            },
+          ],
+        },
+      });
       return output!;
     } catch (error) {
-      console.error('dataCleaningFlow: Error during cleaningPrompt execution:', error);
+      console.error('dataCleaningFlow: Error during generation:', error);
       throw error; // Re-throw the error so it can be caught and handled by the caller
     }
   }
