@@ -78,6 +78,9 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
             range: `${SHEET_NAME}!A:Z`, 
         });
 
+        // ### DIAGNOSTIC LOGGING ###
+        console.log("RAW API RESPONSE:", response.data.values);
+
         const allRows = response.data.values;
         if (!allRows || allRows.length <= 1) {
             console.log("Sheet is empty or has only a header row.");
