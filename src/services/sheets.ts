@@ -21,7 +21,7 @@ async function getSheetsClient() {
     console.error(errorMsg);
     throw new Error(errorMsg);
   }
-
+    
   try {
     const credentials = JSON.parse(credentialsJsonString);
     const auth = new Auth.GoogleAuth({
@@ -76,15 +76,17 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
             range: `${SHEET_NAME}!A:Z`, 
-        }, {
-            // Force fetch to bypass any potential caching
-            headers: { 'Cache-Control': 'no-store' }
         });
 
         const allRows = response.data.values;
         if (!allRows || allRows.length <= 1) {
             console.log("Sheet is empty or has only a header row.");
-            return { headers: [], companies: [] };
+            const headersResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId: SHEET_ID,
+                range: `${SHEET_NAME}!1:1`,
+            });
+            const headers = headersResponse.data.values?.[0] || [];
+            return { headers, companies: [] };
         }
         
         const headers = allRows[0].map(header => header || '');
