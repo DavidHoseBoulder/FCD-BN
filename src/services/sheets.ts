@@ -1,8 +1,7 @@
+
 'use server';
 
-// Debugging: Log to indicate that this file is being executed
-import { google } from 'googleapis';
-
+import { google, Auth } from 'googleapis';
 import type { Company } from '@/lib/data';
 
 // The ID of your Google Sheet, read from environment variables.
@@ -18,19 +17,26 @@ async function getSheetsClient() {
   const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
   if (!credentialsJsonString) {
-    console.error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
-    throw new Error('CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
+    const errorMsg = 'CREDENTIALS_JSON_NOT_SET: The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.';
+    console.error(errorMsg);
+    throw new Error(errorMsg);
   }
 
   try {
     const credentials = JSON.parse(credentialsJsonString);
-    const auth = google.auth.fromJSON(credentials);
-    if (auth === null) {
-      throw new Error('Google Auth client is null after parsing JSON. Check credentials format.');
-    }
-    // @ts-ignore - The type of auth is broad, but fromJSON provides a client with scopes.
-    auth.scopes = ['https://www.googleapis.com/auth/spreadsheets'];
-    return google.sheets({ version: 'v4', auth });
+    const auth = new Auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+
+    const authClient = await auth.getClient();
+
+    return google.sheets({ 
+        version: 'v4', 
+        auth: authClient,
+        // Force fetch to bypass any potential caching
+        fetch_options: { cache: 'no-store' }
+    });
   } catch (error: any) {
     console.error('Failed to initialize Google Sheets client from JSON:', error);
     if (error instanceof SyntaxError) {
@@ -56,6 +62,9 @@ function parseRowToCompany(row: any[], headerMap: Map<string, number>, rowNumber
         company[headerName] = row[index] || '';
     });
 
+    // Ensure core fields exist to prevent runtime errors
+    company['Company Name'] = company['Company Name'] || 'Unknown Company';
+
     return company;
 }
 
@@ -73,6 +82,7 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
 
         const allRows = response.data.values;
         if (!allRows || allRows.length <= 1) {
+            console.log("Sheet is empty or has only a header row.");
             return { headers: [], companies: [] };
         }
         
@@ -88,13 +98,14 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
 
         const companies: Company[] = [];
         dataRows.forEach((row, index) => {
-          const rowNumber = index + 2;
+          const rowNumber = index + 2; // +1 for slice, +1 for header row
           const company = parseRowToCompany(row, headerMap, rowNumber);
           if (company) {
             companies.push(company);
           }
         });    
         
+        console.log(`Fetched ${headers.length} headers and ${companies.length} rows.`);
         return { headers, companies };
 
     } catch (error: any) {
@@ -112,7 +123,9 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
 export async function addCompanyToSheet(companyData: Omit<Company, 'id'>, headers: string[]): Promise<Company> {
     const sheets = await getSheetsClient();
 
+    // Create the row array in the same order as the headers
     const values = [headers.map(header => {
+        // Use the value from companyData if it exists, otherwise default to an empty string
         return companyData[header] || '';
     })];
 
@@ -131,6 +144,7 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>, header
         throw new Error("Could not determine the new row's ID after adding it.");
     }
     
+    // Example updatedRange: 'Company List'!A15:R15
     const match = updatedRange.match(/(\d+):/);
     if (!match || !match[1]) {
         throw new Error("Could not parse the new row number from the update response.");
@@ -151,6 +165,7 @@ export async function updateSheetCell({ companyId, columnName, newValue, headers
         throw new Error(`Column "${columnName}" not found in headers. The column name is case-sensitive.`);
     }
 
+    // Convert 0-based index to 1-based column letter
     const columnLetter = String.fromCharCode('A'.charCodeAt(0) + columnIndex);
     const range = `${SHEET_NAME}!${columnLetter}${companyId}`;
 

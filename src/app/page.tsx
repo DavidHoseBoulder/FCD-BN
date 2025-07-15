@@ -23,13 +23,19 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
   let headers: string[] = [];
   let companyData: Company[] | null = null;
   let error: string | null = null;
-  const currentView = (await searchParams).view || 'dashboard';
+  const currentView = searchParams?.view || 'dashboard';
   
   try {
     ({ headers, companies: companyData } = await getCompaniesFromSheet());
   } catch (e: any) {
     console.error("Data fetching error in page.tsx:", e);
     error = e.message || 'An unexpected error occurred.';
+    // A bit of a hack to extract the core message from my custom error formats
+    if (error.includes("CREDENTIALS_JSON_NOT_SET:")) {
+        error = "The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set for local development. Please create a .env.local file with the service account JSON.";
+    } else if (error.includes("Could not load data from Google Sheet:")) {
+        error = error.split("Could not load data from Google Sheet:")[1].trim();
+    }
   }
 
   const renderContent = () => {
@@ -39,7 +45,7 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
             <CardHeader>
               <CardTitle>Data Fetching Error</CardTitle>
               <CardDescription>
-                Could not load data from the Google Sheet. Please ensure your secrets are configured correctly and the sheet is shared with the service account email.
+                Could not load data from the Google Sheet. Please check your configuration and that the sheet is shared with the service account email.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -53,6 +59,7 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
         )
     }
 
+    // This handles the initial loading state before data or error is available
     if (!companyData) {
         return (
             <div className="space-y-4">
@@ -62,9 +69,29 @@ export default async function Home({ searchParams }: { searchParams: { view?: st
             </div>
         )
     }
+    
+    // This handles the case where data fetch is successful but sheet is empty
+    if (companyData.length === 0) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle>Sheet is Empty</CardTitle>
+                    <CardDescription>
+                        We connected to your Google Sheet, but it appears to be empty or only contains a header row.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p>Please add some data to the sheet named "{process.env.SHEET_NAME || 'Company List'}" to get started.</p>
+                </CardContent>
+            </Card>
+        )
+    }
 
     if (currentView === 'datacleaning') {
-      return <DataCleaningView companyData={companyData} headers={headers} />;
+      // By adding a key that's derived from the headers, we force React
+      // to re-mount the component if the headers change, ensuring it
+      // gets the latest props.
+      return <DataCleaningView key={headers.join('-')} companyData={companyData} headers={headers} />;
     }
     return <DashboardClient initialData={companyData} headers={headers} />;
   }
