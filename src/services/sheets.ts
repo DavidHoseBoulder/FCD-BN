@@ -92,6 +92,9 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
         const headers = allRows[0].map(header => header || '');
         const dataRows = allRows.slice(1);
 
+        // ### DIAGNOSTIC LOGGING ###
+        console.log("SERVER LOG: Headers fetched from Google Sheet:", headers);
+
         const headerMap = new Map<string, number>();
         headers.forEach((header, index) => {
             if (header) {
@@ -123,13 +126,13 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
 /**
  * Appends a new company row to the Google Sheet.
  */
-export async function addCompanyToSheet(companyData: Omit<Company, 'id'>, headers: string[]): Promise<Company> {
+export async function addCompanyToSheet(newCompanyData: Omit<Company, 'id'>, headers: string[]): Promise<Company> {
     const sheets = await getSheetsClient();
 
     // Create the row array in the same order as the headers
     const values = [headers.map(header => {
         // Use the value from companyData if it exists, otherwise default to an empty string
-        return companyData[header] || '';
+        return newCompanyData[header] || '';
     })];
 
     const appendResponse = await sheets.spreadsheets.values.append({

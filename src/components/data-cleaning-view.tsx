@@ -33,7 +33,9 @@ type DataCleaningResult = {
 };
 
 export default function DataCleaningView({ companyData, headers }: { companyData: Company[], headers: string[] }) {
-  console.log("DataCleaningView headers prop:", headers);
+  // ### DIAGNOSTIC LOGGING ###
+  console.log("CLIENT LOG: Headers prop received by DataCleaningView:", headers);
+
   const [isProcessing, startProcessingTransition] = useTransition();
   const [showColumnList, setShowColumnList] = useState(false);
   const [results, setResults] = useState<DataCleaningResult[]>([]);
@@ -47,7 +49,7 @@ export default function DataCleaningView({ companyData, headers }: { companyData
   });
 
   const columnOptions = useMemo(() => {
-    console.log("DataCleaningView calculating columnOptions. headers:", headers, "columnOptions length:", headers.length);
+    console.log("CLIENT LOG: Calculating columnOptions. headers:", headers);
     return headers.map(header => ({ value: header, label: header }));
   }, [headers]);
 
