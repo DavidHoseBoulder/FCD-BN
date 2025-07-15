@@ -1,4 +1,7 @@
 export type Company = {
   id: number;
-  [key: string]: string | number; // Allows for dynamic string keys with string or number values
+  'Company Name': string;
+  'Ecosystem Category'?: string;
+  'LinkedIn URL'?: string; // Added LinkedIn URL
+  [key: string]: string | number | undefined; // Allows for other dynamic string keys
 };

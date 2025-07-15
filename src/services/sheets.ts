@@ -79,8 +79,15 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
             range: `${SHEET_NAME}!A:Z`, 
         });
 
-        // ### DIAGNOSTIC LOGGING ###
-        console.log("RAW API RESPONSE:", response.data.values);
+        // Log the raw data received from the Google Sheet API
+        console.log("Sheets API raw response values:", response.data.values);
+
+        // Add logging for specific header index
+        if (response.data.values && response.data.values.length > 0) {
+            const headerRow = response.data.values[0];
+            console.log("Full header row values:", headerRow);
+            console.log("Value at header index 14:", headerRow[14]); // Index 14 corresponds to column O
+        }
 
         const allRows = response.data.values;
         if (!allRows || allRows.length <= 1) {
@@ -95,8 +102,8 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
         
         const headers = allRows[0].map(header => header || '');
         const dataRows = allRows.slice(1);
-
-        // ### DIAGNOSTIC LOGGING ###
+        
+        // Log the extracted headers
         console.log("SERVER LOG: Headers fetched from Google Sheet:", headers);
 
         const headerMap = new Map<string, number>();
