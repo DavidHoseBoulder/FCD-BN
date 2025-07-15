@@ -14,6 +14,7 @@ const SHEET_NAME = process.env.SHEET_NAME || 'Company List';
  * Initializes and returns an authenticated Google Sheets API client.
  * Uses a service account JSON string from environment variables.
  */
+/*\n\
 async function getSheetsClient() {
   const credentialsJsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
@@ -44,6 +45,7 @@ async function getSheetsClient() {
     throw new Error(`Authentication failed: ${error.message}`);
   }
 }
+*/
 
 /**
  * Parses a single row from the sheet into a Company object using a header mapping.
@@ -71,6 +73,7 @@ function parseRowToCompany(row: any[], headerMap: Map<string, number>, rowNumber
  * Fetches company data from the Google Sheet using the authenticated API.
  */
 export async function getCompaniesFromSheet(): Promise<{ headers: string[], companies: Company[] }> {
+  /*\n\
     try {
         const sheets = await getSheetsClient();
         
@@ -133,6 +136,7 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
        throw new Error(`Could not load data from Google Sheet: ${error.message}`);
     }
 }
+*/
 
 /**
  * Appends a new company row to the Google Sheet.
@@ -170,6 +174,7 @@ export async function addCompanyToSheet(newCompanyData: Omit<Company, 'id'>, hea
 
     return { ...companyData, id: newId };
 }
+*/
 
 /**
  * Updates a single cell in the Google Sheet.
@@ -195,3 +200,4 @@ export async function updateSheetCell({ companyId, columnName, newValue, headers
         },
     });
 }
+*/
