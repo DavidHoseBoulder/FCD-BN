@@ -200,9 +200,9 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
         <CardContent className="flex flex-col space-y-2">
           {Object.entries(revenueCounts).map(([bucket, count]) => (
             count > 0 && (
-                <div key={bucket} className="flex items-center justify-between">
-                  <Badge variant="outline">{bucket}</Badge>
-                  <span className="font-semibold">{count}</span>
+                <div key={bucket} className="flex items-center gap-4">
+                  <Badge variant="outline" className="flex-1">{bucket}</Badge>
+                  <span className="font-semibold w-12 text-right">{count}</span>
                 </div>
             )
           ))}
