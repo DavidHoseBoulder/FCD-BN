@@ -26,6 +26,14 @@ const revenueBuckets = {
   'Unknown': 0,
 };
 
+const employeeBuckets = {
+  '<20': 0,
+  '20-50': 0,
+  '50-100': 0,
+  '>100': 0,
+  'Unknown': 0,
+};
+
 // This function now takes a string or number and returns the correct bucket
 const getRevenueBucket = (revenue: string | number | undefined): keyof typeof revenueBuckets => {
     if (revenue === undefined || revenue === null || revenue === '') {
@@ -62,6 +70,20 @@ const getRevenueBucket = (revenue: string | number | undefined): keyof typeof re
 
     return 'Unknown';
 }
+
+
+const getEmployeeBucket = (employees: string | number | undefined): keyof typeof employeeBuckets => {
+    if (employees === undefined || employees === null || employees === '') {
+        return 'Unknown';
+    }
+    const numEmployees = typeof employees === 'string' ? parseInt(employees.replace(/,/g, ''), 10) : employees;
+
+    if (isNaN(numEmployees)) return 'Unknown';
+    if (numEmployees < 20) return '<20';
+    if (numEmployees <= 50) return '20-50';
+    if (numEmployees <= 100) return '50-100';
+    return '>100';
+};
 
 
 const ActiveShape = (props: any) => {
@@ -131,6 +153,21 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
     return counts;
   }, [data, revenueHeader]);
 
+   const employeeHeader = headers.find(h => h === '# Employees - High') || headers.find(h => h.toLowerCase().includes('employees'));
+
+    const employeeCounts = useMemo(() => {
+        const counts = { ...employeeBuckets };
+        if (!employeeHeader || !data) return counts;
+
+        data.forEach(company => {
+            const employeeValue = company[employeeHeader];
+            const bucket = getEmployeeBucket(employeeValue);
+            counts[bucket]++;
+        });
+
+        return counts;
+    }, [data, employeeHeader]);
+
 
   const handlePieClick = useCallback((_: any, index: number) => {
       const category = chartData[index].name;
@@ -150,7 +187,7 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
 
   const totalCompanies = data?.length ?? 0;
   return (
-    <div className="grid gap-6 md:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-4">
       <Card>
         <CardHeader>
           <CardTitle>Total Companies</CardTitle>
@@ -199,6 +236,21 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
         </CardHeader>
         <CardContent className="flex flex-col space-y-2">
           {Object.entries(revenueCounts).map(([bucket, count]) => (
+            count > 0 && (
+                <div key={bucket} className="flex items-center gap-4">
+                  <Badge variant="outline">{bucket}</Badge>
+                  <span className="font-semibold text-right">{count}</span>
+                </div>
+            )
+          ))}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>By Est. Employees</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col space-y-2">
+          {Object.entries(employeeCounts).map(([bucket, count]) => (
             count > 0 && (
                 <div key={bucket} className="flex items-center gap-4">
                   <Badge variant="outline">{bucket}</Badge>
