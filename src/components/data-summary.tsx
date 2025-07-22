@@ -26,13 +26,43 @@ const revenueBuckets = {
   'Unknown': 0,
 };
 
-const revenueMapping: { [key: string]: keyof typeof revenueBuckets } = {
-    '< $5M': '< $5M',
-    '$5M-$9M': '$5M - $10M',
-    '$10M-$19M': '$10M - $19M',
-    '$20M-$49M': '$20M - $49M',
-    '>$50M': '> $50M',
-};
+// This function now takes a string or number and returns the correct bucket
+const getRevenueBucket = (revenue: string | number | undefined): keyof typeof revenueBuckets => {
+    if (revenue === undefined || revenue === null || revenue === '') {
+        return 'Unknown';
+    }
+
+    // Handle numeric values directly
+    if (typeof revenue === 'number') {
+        if (revenue < 5000000) return '< $5M';
+        if (revenue < 10000000) return '$5M - $10M';
+        if (revenue < 20000000) return '$10M - $19M';
+        if (revenue < 50000000) return '$20M - $49M';
+        return '> $50M';
+    }
+
+    // Handle string values (like '$5M-$9M', '< $5M')
+    const revenueStr = String(revenue);
+     if (revenueStr.includes('< $5M')) return '< $5M';
+    if (revenueStr.includes('$5M-$9M')) return '$5M - $10M';
+    if (revenueStr.includes('$10M-$19M')) return '$10M - $19M';
+    if (revenueStr.includes('$20M-$49M')) return '$20M - $49M';
+    if (revenueStr.includes('>$50M')) return '> $50M';
+
+    // Handle plain numbers as strings
+    const numericValue = parseFloat(revenueStr.replace(/[^0-9.-]+/g,""));
+    if (!isNaN(numericValue)) {
+         if (numericValue < 5000000) return '< $5M';
+        if (numericValue < 10000000) return '$5M - $10M';
+        if (numericValue < 20000000) return '$10M - $19M';
+        if (numericValue < 50000000) return '$20M - $49M';
+        return '> $50M';
+    }
+
+
+    return 'Unknown';
+}
+
 
 const ActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload } = props;
@@ -84,16 +114,23 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
     };
     return acc;
   }, {} as ChartConfig), [chartData]);
-  // Find the correct header name for Revenue (assuming a standard name or similar)
- const revenueHeader = headers.find(h => h.toLowerCase().includes('revenue')) || 'Est. Annual Revenue';
+  
+  // Use the specific "Annual Revenue - High" column, falling back to a search if not found
+  const revenueHeader = headers.find(h => h === 'Annual Revenue - High') || headers.find(h => h.toLowerCase().includes('revenue'));
 
-  const revenueCounts = (data && Array.isArray(data)) ? data.reduce((acc, company) => {
-    const revenueStr = company[revenueHeader] || '';
-    const bucket = revenueMapping[revenueStr] || 'Unknown';
-    acc[bucket] = (acc[bucket] || 0) + 1;
-    return acc;
-  }, { ...revenueBuckets } as Record<string, number>)
-  : { ...revenueBuckets };
+  const revenueCounts = useMemo(() => {
+    const counts = { ...revenueBuckets };
+    if (!revenueHeader || !data) return counts;
+
+    data.forEach(company => {
+        const revenueValue = company[revenueHeader];
+        const bucket = getRevenueBucket(revenueValue);
+        counts[bucket]++;
+    });
+
+    return counts;
+  }, [data, revenueHeader]);
+
 
   const handlePieClick = useCallback((_: any, index: number) => {
       const category = chartData[index].name;

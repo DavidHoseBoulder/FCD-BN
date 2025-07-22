@@ -46,6 +46,7 @@ Company Information:
 - Headquarters: ${company.headquarters}
 - Core Offering: ${company.offering}
 - Category: ${company.category}
+- URL: ${company.URL}
 - Website (if available in offering): Analyze the core offering to find a potential website.
 
 Based on the request and the company information, determine the new value for the column: "${targetColumn}".

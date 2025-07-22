@@ -2,7 +2,7 @@ export type Company = {
   id: number | string; // Use string | number to accommodate string IDs if needed
   "Company Name": string;
   'Ecosystem Category'?: string;
-  'LinkedIn URL'?: string; // Added LinkedIn URL back
+  "LinkedIN URL"?: string; // Added LinkedIn URL back
   [key: string]: any; // Use 'any' or a more specific union type if you know the other possible value types
 };
 
