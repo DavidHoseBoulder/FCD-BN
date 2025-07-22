@@ -201,8 +201,8 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
           {Object.entries(revenueCounts).map(([bucket, count]) => (
             count > 0 && (
                 <div key={bucket} className="flex items-center gap-4">
-                  <Badge variant="outline" className="flex-1">{bucket}</Badge>
-                  <span className="font-semibold w-12 text-right">{count}</span>
+                  <Badge variant="outline">{bucket}</Badge>
+                  <span className="font-semibold text-right">{count}</span>
                 </div>
             )
           ))}
