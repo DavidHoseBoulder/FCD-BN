@@ -6,26 +6,35 @@ const MODELS = ['googleai/gemini-1.5-flash-latest', 'googleai/gemini-1.5-pro-lat
 const STORAGE_KEY = 'selectedGenkitModel';
 
 export function useModelSelection() {
-  const [selectedModel, setSelectedModel] = useState<string>(() => {
-    if (typeof window === 'undefined') {
-      return MODELS[0];
-    }
-    try {
-      const item = window.localStorage.getItem(STORAGE_KEY);
-      return item && MODELS.includes(item) ? item : MODELS[0];
-    } catch (error) {
-      console.error(error);
-      return MODELS[0];
-    }
-  });
+  const [selectedModel, setSelectedModel] = useState<string>(MODELS[0]);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, selectedModel);
-    } catch (error) {
-      console.error(error);
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        const item = window.localStorage.getItem(STORAGE_KEY);
+        if (item && MODELS.includes(item)) {
+          setSelectedModel(item);
+        }
+      } catch (error) {
+        console.error('Failed to read from localStorage', error);
+      }
     }
-  }, [selectedModel]);
+  }, [isMounted]);
+
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, selectedModel);
+      } catch (error) {
+        console.error('Failed to write to localStorage', error);
+      }
+    }
+  }, [selectedModel, isMounted]);
 
   const handleSetSelectedModel = useCallback((model: string) => {
     if (MODELS.includes(model)) {
