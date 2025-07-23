@@ -47,17 +47,30 @@ const getRankBucket = (rank: string | number | undefined): keyof typeof rankBuck
     if (rank === undefined || rank === null || rank === '') {
         return 'Unknown';
     }
+    // Convert to number, safely handling both string and number types
     const rankValue = typeof rank === 'string' ? parseInt(rank, 10) : rank;
-    if (isNaN(rankValue)) return 'Unknown';
 
-    if (rankValue === 5) return 'Excellent';
-    if (rankValue === 4) return 'Good';
-    if (rankValue === 3) return 'Moderate';
-    if (rankValue === 2) return 'Low';
-    if (rankValue === 1) return 'Poor';
-    
-    return 'Unknown';
+    // Check if the conversion resulted in a valid number
+    if (isNaN(rankValue)) {
+        return 'Unknown';
+    }
+
+    switch (rankValue) {
+        case 5:
+            return 'Excellent';
+        case 4:
+            return 'Good';
+        case 3:
+            return 'Moderate';
+        case 2:
+            return 'Low';
+        case 1:
+            return 'Poor';
+        default:
+            return 'Unknown';
+    }
 };
+
 
 // This function now takes a string or number and returns the correct bucket
 const getRevenueBucket = (revenue: string | number | undefined): keyof typeof revenueBuckets => {
