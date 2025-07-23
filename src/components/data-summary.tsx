@@ -17,6 +17,15 @@ type DataSummaryProps = {
   headers: string[]; // Add headers prop
 };
 
+const rankBuckets = {
+    'Excellent': 0,
+    'Good': 0,
+    'Moderate': 0,
+    'Low': 0,
+    'Poor': 0,
+    'Unknown': 0,
+};
+
 const revenueBuckets = {
   '< $5M': 0,
   '$5M - $10M': 0,
@@ -32,6 +41,23 @@ const employeeBuckets = {
   '50-100': 0,
   '>100': 0,
   'Unknown': 0,
+};
+
+const getRankBucket = (rank: string | number | undefined): keyof typeof rankBuckets => {
+    if (rank === undefined || rank === null || rank === '') {
+        return 'Unknown';
+    }
+    const rankValue = typeof rank === 'string' ? parseInt(rank, 10) : rank;
+    if (isNaN(rankValue)) return 'Unknown';
+
+    switch (rankValue) {
+        case 5: return 'Excellent';
+        case 4: return 'Good';
+        case 3: return 'Moderate';
+        case 2: return 'Low';
+        case 1: return 'Poor';
+        default: return 'Unknown';
+    }
 };
 
 // This function now takes a string or number and returns the correct bucket
@@ -137,6 +163,20 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
     return acc;
   }, {} as ChartConfig), [chartData]);
   
+  const rankHeader = headers.find(h => h.toLowerCase() === 'rank');
+  const rankCounts = useMemo(() => {
+    const counts = { ...rankBuckets };
+    if (!rankHeader || !data) return counts;
+
+    data.forEach(company => {
+        const rankValue = company[rankHeader];
+        const bucket = getRankBucket(rankValue);
+        counts[bucket]++;
+    });
+    
+    return counts;
+  }, [data, rankHeader]);
+
   // Use the specific "Annual Revenue - High" column, falling back to a search if not found
   const revenueHeader = headers.find(h => h === 'Annual Revenue - High') || headers.find(h => h.toLowerCase().includes('revenue'));
 
@@ -187,7 +227,7 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
 
   const totalCompanies = data?.length ?? 0;
   return (
-    <div className="grid gap-6 md:grid-cols-4">
+    <div className="grid gap-6 md:grid-cols-5">
       <Card>
         <CardHeader>
           <CardTitle>Total Companies</CardTitle>
@@ -232,6 +272,21 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
       </Card>
        <Card>
         <CardHeader>
+          <CardTitle>By Rank</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col space-y-2">
+            {Object.entries(rankCounts).map(([bucket, count]) => (
+                count > 0 && (
+                    <div key={bucket} className="flex items-center gap-4">
+                      <Badge variant="outline">{bucket}</Badge>
+                      <span className="font-semibold">{count}</span>
+                    </div>
+                )
+            ))}
+        </CardContent>
+      </Card>
+       <Card>
+        <CardHeader>
           <CardTitle>By Est. Revenue</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col space-y-2">
@@ -239,7 +294,7 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
             count > 0 && (
                 <div key={bucket} className="flex items-center gap-4">
                   <Badge variant="outline">{bucket}</Badge>
-                  <span className="font-semibold text-right">{count}</span>
+                  <span className="font-semibold">{count}</span>
                 </div>
             )
           ))}
@@ -254,7 +309,7 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
             count > 0 && (
                 <div key={bucket} className="flex items-center gap-4">
                   <Badge variant="outline">{bucket}</Badge>
-                  <span className="font-semibold text-right">{count}</span>
+                  <span className="font-semibold">{count}</span>
                 </div>
             )
           ))}
