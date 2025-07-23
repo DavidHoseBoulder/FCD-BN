@@ -175,7 +175,7 @@ export function DataSummary({ data, selectedEcosystem, onEcosystemSelect, header
     return acc;
   }, {} as ChartConfig), [chartData]);
   
-  const rankHeader = headers.find(h => h.toLowerCase() === 'rank');
+  const rankHeader = headers.find(h => h === 'Rank (1=low, 5=high)') || headers.find(h => h.toLowerCase().includes('rank'));
   const rankCounts = useMemo(() => {
     const counts = { ...rankBuckets };
     if (!rankHeader || !data) return counts;
