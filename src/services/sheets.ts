@@ -88,7 +88,7 @@ export async function getCompaniesFromSheet(): Promise<{ headers: string[], comp
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
             // Fetch a wider range to accommodate all potential columns
-            range: `${SHEET_NAME}!A:Z`, 
+            range: `${SHEET_NAME}!A:AE`, 
         });
 
 
