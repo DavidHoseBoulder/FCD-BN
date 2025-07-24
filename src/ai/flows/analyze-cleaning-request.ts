@@ -27,7 +27,7 @@ const analyzeCleaningRequestFlow = ai.defineFlow(
     outputSchema: AnalyzeCleaningRequestOutputSchema,
   },
   async ({ request, model }) => {
-    const prompt = `You are an expert at interpreting user requests and translating them into structured data schemas. A user will provide a prompt for enriching company data. Your task is to identify all the distinct pieces of information (data points) the user is asking for.
+    const prompt = `You are an expert at interpreting user requests and translating them into structured data schemas. A user will provide a prompt for enriching company data. Your task is to identify only the distinct pieces of information (data points) the user is asking the AI to *generate* or *create*. Ignore any data points mentioned as inputs or conditions.
 
 User Request: "${request}"
 
@@ -35,7 +35,7 @@ Based on this request, identify the data points that need to be generated. For e
 
 Examples:
 - User Request: "Find the estimated valuation and a confidence score." -> Output: { "dataPoints": ["estimatedValuation", "confidenceScore"] }
-- User Request: "Who is the CEO and what is their LinkedIn profile URL?" -> Output: { "dataPoints": ["ceoName", "ceoLinkedInURL"] }
+- User Request: "Based on employee count and location, find the CEO and what their LinkedIn profile URL is." -> Output: { "dataPoints": ["ceoName", "ceoLinkedInURL"] }
 - User Request: "Generate a 1-paragraph summary of the company's core offering." -> Output: { "dataPoints": ["offeringSummary"] }
 
 Return a JSON object containing a single key "dataPoints" which is an array of these camelCase strings.`;
