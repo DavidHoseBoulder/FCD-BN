@@ -176,29 +176,19 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>, header
 }
 
 /**
- * Updates a single cell in the Google Sheet.
+ * Converts a zero-based column index to an A1 notation column letter.
+ * e.g., 0 -> A, 1 -> B, 26 -> AA
  */
-export async function updateSheetCell({ companyId, columnName, newValue, headers }: { companyId: number | string, columnName: string, newValue: string, headers: string[] }): Promise<void> {
-    const sheets = await getSheetsClient();    
-    const columnIndex = headers.indexOf(columnName);
-
-    if (columnIndex === -1) {
-        throw new Error(`Column "${columnName}" not found in headers. The column name is case-sensitive.`);
+function getColumnLetter(columnIndex: number): string {
+    let temp, letter = '';
+    while (columnIndex >= 0) {
+        temp = columnIndex % 26;
+        letter = String.fromCharCode(temp + 65) + letter;
+        columnIndex = Math.floor(columnIndex / 26) - 1;
     }
-
-    const columnLetter = String.fromCharCode('A'.charCodeAt(0) + columnIndex);
-    const range = `${SHEET_NAME}!${columnLetter}${companyId}`;
-    console.log(`Updating cell: ${range} with value: "${newValue}"`);
-
-    await sheets.spreadsheets.values.update({
-        spreadsheetId: SHEET_ID,
-        range,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [[newValue]],
-        },
-    });
+    return letter;
 }
+
 
 /**
  * Updates multiple cells in a single row of the Google Sheet.
@@ -216,7 +206,7 @@ export async function updateSheetRow({ companyId, updates, headers }: { companyI
             continue;
         }
 
-        const columnLetter = String.fromCharCode('A'.charCodeAt(0) + columnIndex);
+        const columnLetter = getColumnLetter(columnIndex);
         data.push({
             range: `${SHEET_NAME}!${columnLetter}${companyId}`,
             values: [[newValue]],
