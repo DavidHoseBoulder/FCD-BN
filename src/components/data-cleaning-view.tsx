@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useTransition, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useTransition, useMemo } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Company } from '@/lib/data';
@@ -13,31 +13,33 @@ import { useToast } from '@/hooks/use-toast';
 import { processDataCleaningRequest } from '@/ai/flows/process-data-cleaning-request';
 import { Progress } from './ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Combobox } from './ui/combobox';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, PlusCircle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModelSelection } from '@/hooks/use-model-selection';
+import { Command, CommandEmpty, CommandGroup, CommandList } from './ui/command';
+import { CommandItem } from 'cmdk';
+import { Input } from './ui/input';
+
+const outputMappingSchema = z.object({
+  dataPoint: z.string().min(1, { message: 'Data point name is required.' }),
+  targetColumn: z.string().min(1, { message: 'Please select a column.' }),
+});
 
 const formSchema = z.object({
   request: z.string().min(10, { message: 'Please provide a more detailed request.' }),
-  targetColumn: z.string({ required_error: 'Please select a column to update.' }).min(1, { message: 'Please select a column to update.' }),
+  outputMappings: z.array(outputMappingSchema).min(1, { message: 'Please define at least one output mapping.' }),
 });
 
 type DataCleaningResult = {
   companyName: string;
-  updatedValue: string;
+  updatedValues: Record<string, string>;
   status: 'Processed' | 'error';
   error?: string;
 };
 
 export default function DataCleaningView({ companyData, headers }: { companyData: Company[], headers: string[] }) {
-  // ### DIAGNOSTIC LOGGING ###
-  console.log("CLIENT LOG: Headers prop received by DataCleaningView:", headers);
-
   const [isProcessing, startProcessingTransition] = useTransition();
-  const [showColumnList, setShowColumnList] = useState(false);
   const [results, setResults] = useState<DataCleaningResult[]>([]);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
@@ -45,19 +47,21 @@ export default function DataCleaningView({ companyData, headers }: { companyData
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { request: '' },
+    defaultValues: {
+      request: '',
+      outputMappings: [{ dataPoint: '', targetColumn: '' }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'outputMappings',
   });
 
   const columnOptions = useMemo(() => {
-    console.log("CLIENT LOG: Calculating columnOptions. headers:", headers);
     return headers.map(header => ({ value: header, label: header }));
   }, [headers]);
 
-  useEffect(() => {
-    if (columnOptions.length > 0) {
-      setShowColumnList(true);
-    }
-  }, [columnOptions]);
 
   const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
     setResults([]);
@@ -72,7 +76,7 @@ export default function DataCleaningView({ companyData, headers }: { companyData
           const result = await processDataCleaningRequest({ ...values, company, headers, model: selectedModel });
           newResults.push({
             companyName: company['Company Name'] as string,
-            updatedValue: result.updatedValue,
+            updatedValues: result.updatedValues,
             status: 'Processed',
           });
         } catch (error: any) {
@@ -82,7 +86,7 @@ export default function DataCleaningView({ companyData, headers }: { companyData
           }
           newResults.push({
             companyName: company['Company Name'] as string,
-            updatedValue: '',
+            updatedValues: {},
             status: 'error',
             error: errorMessage,
           });
@@ -111,13 +115,19 @@ export default function DataCleaningView({ companyData, headers }: { companyData
     });
   };
 
+  const getResultHeaders = () => {
+    if (results.length === 0) return [];
+    const firstResult = results[0];
+    return ['Company', ...Object.keys(firstResult.updatedValues), 'Status'];
+  };
+
   return (
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>AI-Powered Data Cleaning</CardTitle>
+          <CardTitle>AI-Powered Data Cleaning & Enrichment</CardTitle>
           <CardDescription>
-            Enter a request to process and update your spreadsheet data row by row.
+            Define the data you want to generate and map it to your spreadsheet columns.
             This requires write access to the Google Sheet.
           </CardDescription>
         </CardHeader>
@@ -129,74 +139,100 @@ export default function DataCleaningView({ companyData, headers }: { companyData
                 name="request"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cleaning Request</FormLabel>
+                    <FormLabel>Your Request</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g., 'Find the LinkedIn URL for each company'" {...field} />
+                      <Textarea placeholder="e.g., 'Based on the company info, provide an estimated valuation and a rationale for it.'" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="targetColumn"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Column to Update</FormLabel>
-                     <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                              "w-full justify-between",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value
-                              ? columnOptions.find(
-                                  (col) => col.value === field.value
-                                )?.label
-                              : "Select a column"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                        <Command>
-                          {/* Removed CommandInput as per previous instruction */}
-                          {/* <CommandInput placeholder="Search columns..." /> */}
-                          <CommandList>
-                             <CommandEmpty>{columnOptions.length === 0 ? 'No column found.' : 'No search results.'}</CommandEmpty>
-                            {headers && headers.length > 0 && (
-                              <CommandGroup>
-                                {columnOptions.map((col) => (
-                                  <CommandItem
-                                    value={col.value} // Use col.value for consistency
-                                    key={col.value}
-                                    onSelect={() => {
-                                      form.setValue("targetColumn", col.value);
-                                    }}
+
+              <div>
+                <FormLabel>Output Mapping</FormLabel>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Define the data points for the AI to generate and map them to your sheet columns.
+                </p>
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="flex items-end gap-4 p-4 border rounded-lg">
+                      <FormField
+                        control={form.control}
+                        name={`outputMappings.${index}.dataPoint`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>AI Output Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., 'estimatedValuation'" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`outputMappings.${index}.targetColumn`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Sheet Column</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
                                   >
-                                    <Check
-                                      className={cn("mr-2 h-4 w-4", col.value === field.value ? "opacity-100" : "opacity-0")}
-                                    />
-                                    {col.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            )}
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                                    {field.value ? columnOptions.find((col) => col.value === field.value)?.label : "Select a column"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                  <CommandList>
+                                    <CommandEmpty>No column found.</CommandEmpty>
+                                    <CommandGroup>
+                                      {columnOptions.map((col) => (
+                                        <CommandItem
+                                          value={col.value}
+                                          key={col.value}
+                                          onSelect={() => { form.setValue(`outputMappings.${index}.targetColumn`, col.value); }}
+                                        >
+                                          <Check className={cn("mr-2 h-4 w-4", col.value === field.value ? "opacity-100" : "opacity-0")} />
+                                          {col.label}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                 <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => append({ dataPoint: '', targetColumn: '' })}
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Mapping
+                </Button>
+                 <FormMessage>{form.formState.errors.outputMappings?.message}</FormMessage>
+              </div>
+
               <Button type="submit" disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : 'Start Data Cleaning'}
+                {isProcessing ? 'Processing...' : 'Start Data Enrichment'}
               </Button>
             </form>
           </Form>
@@ -204,45 +240,45 @@ export default function DataCleaningView({ companyData, headers }: { companyData
       </Card>
 
       {(isProcessing || results.length > 0) && (
-         <Card>
-            <CardHeader>
-                <CardTitle>{isProcessing ? 'Processing...' : 'Results'}</CardTitle>
-                 {results.length > 0 && !isProcessing && <CardDescription>Updates applied to your Google Sheet.</CardDescription>}
-            </CardHeader>
-            <CardContent>
-                 {isProcessing && (
-                    <>
-                        <Progress value={progress} className="w-full" />
-                        <p className="text-center text-sm text-muted-foreground mt-2">
-                            {Math.round(progress)}% complete
-                        </p>
-                    </>
-                 )}
-                 {results.length > 0 && (
-                    <div className="mt-4">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Company</TableHead>
-                                    <TableHead>New Value</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {results.map((result, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell className="font-medium">{result.companyName}</TableCell>
-                                        <TableCell>{result.updatedValue || "N/A"}</TableCell>
-                                        <TableCell className={result.status === 'error' ? 'text-destructive' : 'text-green-500'}>
-                                            {result.status === 'Processed' ? 'Processed' : `Error: ${result.error}`}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                 )}
-            </CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>{isProcessing ? 'Processing...' : 'Results'}</CardTitle>
+            {results.length > 0 && !isProcessing && <CardDescription>Updates applied to your Google Sheet.</CardDescription>}
+          </CardHeader>
+          <CardContent>
+            {isProcessing && (
+              <>
+                <Progress value={progress} className="w-full" />
+                <p className="text-center text-sm text-muted-foreground mt-2">
+                  {Math.round(progress)}% complete
+                </p>
+              </>
+            )}
+            {results.length > 0 && (
+              <div className="mt-4 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {getResultHeaders().map(header => <TableHead key={header}>{header}</TableHead>)}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {results.map((result, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{result.companyName}</TableCell>
+                        {Object.keys(results[0].updatedValues).map(key => (
+                           <TableCell key={key}>{result.updatedValues[key] || "N/A"}</TableCell>
+                        ))}
+                        <TableCell className={result.status === 'error' ? 'text-destructive' : 'text-green-500'}>
+                          {result.status === 'Processed' ? 'Processed' : `Error: ${result.error}`}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
         </Card>
       )}
     </div>

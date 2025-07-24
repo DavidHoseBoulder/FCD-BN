@@ -178,7 +178,7 @@ export async function addCompanyToSheet(companyData: Omit<Company, 'id'>, header
 /**
  * Updates a single cell in the Google Sheet.
  */
-export async function updateSheetCell({ companyId, columnName, newValue, headers }: { companyId: number, columnName: string, newValue: string, headers: string[] }): Promise<void> {
+export async function updateSheetCell({ companyId, columnName, newValue, headers }: { companyId: number | string, columnName: string, newValue: string, headers: string[] }): Promise<void> {
     const sheets = await getSheetsClient();    
     const columnIndex = headers.indexOf(columnName);
 
@@ -196,6 +196,45 @@ export async function updateSheetCell({ companyId, columnName, newValue, headers
         valueInputOption: 'USER_ENTERED',
         requestBody: {
             values: [[newValue]],
+        },
+    });
+}
+
+/**
+ * Updates multiple cells in a single row of the Google Sheet.
+ */
+export async function updateSheetRow({ companyId, updates, headers }: { companyId: number | string, updates: Record<string, string>, headers: string[] }): Promise<void> {
+    const sheets = await getSheetsClient();
+    const data = [];
+
+    for (const columnName in updates) {
+        const newValue = updates[columnName];
+        const columnIndex = headers.indexOf(columnName);
+
+        if (columnIndex === -1) {
+            console.warn(`Column "${columnName}" not found in headers. Skipping update.`);
+            continue;
+        }
+
+        const columnLetter = String.fromCharCode('A'.charCodeAt(0) + columnIndex);
+        data.push({
+            range: `${SHEET_NAME}!${columnLetter}${companyId}`,
+            values: [[newValue]],
+        });
+    }
+
+    if (data.length === 0) {
+        console.log("No valid updates to send to sheet.");
+        return;
+    }
+
+    console.log(`Updating ${data.length} cells in row ${companyId}`);
+
+    await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: SHEET_ID,
+        requestBody: {
+            valueInputOption: 'USER_ENTERED',
+            data: data,
         },
     });
 }
