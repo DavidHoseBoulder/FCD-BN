@@ -17,8 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Check, ChevronsUpDown, PlusCircle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModelSelection } from '@/hooks/use-model-selection';
-import { Command, CommandEmpty, CommandGroup, CommandList } from './ui/command';
-import { CommandItem } from 'cmdk';
+import { Command, CommandEmpty, CommandGroup, CommandList, CommandItem } from './ui/command';
 import { Input } from './ui/input';
 
 const outputMappingSchema = z.object({
@@ -90,7 +89,7 @@ export default function DataCleaningView({ companyData, headers }: { companyData
             status: 'error',
             error: errorMessage,
           });
-          console.error(`Error processing '${company.name}':`, error);
+          console.error(`Error processing '${company['Company Name']}':`, error);
 
           if (error.message.includes('SA_KEY_NOT_SET')) {
              toast({
@@ -175,7 +174,7 @@ export default function DataCleaningView({ companyData, headers }: { companyData
                         render={({ field }) => (
                           <FormItem className="flex-1">
                             <FormLabel>Sheet Column</FormLabel>
-                            <Popover>
+                             <Popover>
                               <PopoverTrigger asChild>
                                 <FormControl>
                                   <Button
@@ -195,11 +194,12 @@ export default function DataCleaningView({ companyData, headers }: { companyData
                                     <CommandGroup>
                                       {columnOptions.map((col) => (
                                         <CommandItem
-                                          value={col.value}
+                                          value={col.label}
                                           key={col.value}
-                                          onSelect={() => { form.setValue(`outputMappings.${index}.targetColumn`, col.value); }}
+                                          onSelect={() => {
+                                            form.setValue(`outputMappings.${index}.targetColumn`, col.value)
+                                          }}
                                         >
-                                          <Check className={cn("mr-2 h-4 w-4", col.value === field.value ? "opacity-100" : "opacity-0")} />
                                           {col.label}
                                         </CommandItem>
                                       ))}
