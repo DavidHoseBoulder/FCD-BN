@@ -7,6 +7,7 @@ import { Company } from './data';
  * Next.js "use server" constraints.
  */
 
+// Schema and type for the main data enrichment/cleaning flow
 export const DataCleaningRequestInputSchema = z.object({
   request: z.string().describe('The user\'s request for data cleaning. e.g., "Find the LinkedIn URL for each company."'),
   outputMappings: z.array(z.object({
@@ -23,3 +24,16 @@ export const DataCleaningRequestOutputSchema = z.object({
   updatedValues: z.record(z.string()).describe('A key-value object where keys are the requested data points and values are the generated strings.'),
 });
 export type DataCleaningRequestOutput = z.infer<typeof DataCleaningRequestOutputSchema>;
+
+
+// Schema and type for the initial prompt analysis flow
+export const AnalyzeCleaningRequestInputSchema = z.object({
+  request: z.string().describe("The user's free-text request for data enrichment. e.g., 'Find the company valuation and the rationale behind it.'"),
+  model: z.string().optional().describe('The name of the model to use for generation.'),
+});
+export type AnalyzeCleaningRequestInput = z.infer<typeof AnalyzeCleaningRequestInputSchema>;
+
+export const AnalyzeCleaningRequestOutputSchema = z.object({
+  dataPoints: z.array(z.string()).describe('An array of strings, where each string is a camelCase key representing a data point the user wants. e.g., ["estimatedValuation", "valuationRationale"]'),
+});
+export type AnalyzeCleaningRequestOutput = z.infer<typeof AnalyzeCleaningRequestOutputSchema>;
